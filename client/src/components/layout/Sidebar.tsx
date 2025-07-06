@@ -35,6 +35,7 @@ const navigationSections = [
     items: [
       { id: "crowdfunding", label: "Crowdfunding", icon: TrendingUp },
       { id: "tokenomics", label: "$FBT Tokenomics", icon: Coins },
+      { id: "investor", label: "Investor Dashboard", icon: BarChart3 },
     ]
   },
   {

@@ -15,6 +15,7 @@ import SmartContracts from "@/pages/SmartContracts";
 import Compliance from "@/pages/Compliance";
 import Analytics from "@/pages/Analytics";
 import UserManagement from "@/pages/UserManagement";
+import InvestorDashboard from "@/pages/InvestorDashboard";
 
 const sections = {
   dashboard: { 
@@ -71,6 +72,11 @@ const sections = {
     component: UserManagement, 
     title: "User Management", 
     subtitle: "Authentication, profiles, and role-based access control" 
+  },
+  investor: { 
+    component: InvestorDashboard, 
+    title: "Investor Dashboard", 
+    subtitle: "White label business metrics and client management" 
   },
 };
 

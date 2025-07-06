@@ -160,11 +160,13 @@ export default function AdminPanel() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="coinbase">Coinbase CDP</TabsTrigger>
           <TabsTrigger value="circle">Circle USDC</TabsTrigger>
           <TabsTrigger value="agglayer">Polygon Agglayer</TabsTrigger>
+          <TabsTrigger value="agentkit">AgentKit</TabsTrigger>
+          <TabsTrigger value="onchainkit">OnchainKit</TabsTrigger>
           <TabsTrigger value="paymaster">Paymaster</TabsTrigger>
           <TabsTrigger value="management">Platform</TabsTrigger>
         </TabsList>
@@ -549,6 +551,195 @@ export default function AdminPanel() {
                       <span className="font-semibold">2.5%</span>
                     </div>
                   </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="agentkit" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Zap className="w-5 h-5" />
+                <span>Coinbase AgentKit Integration</span>
+                <Badge variant="outline" className="bg-orange-50 text-orange-700">Autonomous AI</Badge>
+              </CardTitle>
+              <CardDescription>
+                AI-powered autonomous Web3 operations for intelligent transaction management
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Autonomous Operations</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded">
+                      <div>
+                        <p className="font-medium">Smart Payment Processing</p>
+                        <p className="text-sm text-muted-foreground">Automated USDC/ETH/FBT routing</p>
+                      </div>
+                      <Badge variant="outline" className="bg-green-50 text-green-700">Active</Badge>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-purple-50 rounded">
+                      <div>
+                        <p className="font-medium">Smart Contract Automation</p>
+                        <p className="text-sm text-muted-foreground">Autonomous contract interactions</p>
+                      </div>
+                      <Badge variant="outline" className="bg-green-50 text-green-700">Active</Badge>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-green-50 rounded">
+                      <div>
+                        <p className="font-medium">Cross-Chain Operations</p>
+                        <p className="text-sm text-muted-foreground">Intelligent bridge routing</p>
+                      </div>
+                      <Badge variant="outline" className="bg-green-50 text-green-700">Active</Badge>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-yellow-50 rounded">
+                      <div>
+                        <p className="font-medium">Gas Optimization AI</p>
+                        <p className="text-sm text-muted-foreground">ML-powered gas savings</p>
+                      </div>
+                      <Badge variant="outline" className="bg-green-50 text-green-700">Active</Badge>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Performance Metrics</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span>Total Actions Executed</span>
+                      <span className="font-semibold">1,247</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Success Rate</span>
+                      <span className="font-semibold text-green-600">99.2%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Average Execution Time</span>
+                      <span className="font-semibold">2.3s</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Gas Savings Generated</span>
+                      <span className="font-semibold text-green-600">15.8%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Active Automations</span>
+                      <span className="font-semibold">23</span>
+                    </div>
+                  </div>
+                  
+                  <div className="pt-4 border-t">
+                    <h4 className="font-semibold mb-2">Recent AI Actions</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>USDC Payment to Driver</span>
+                        <Badge variant="outline" className="bg-green-50 text-green-700">Completed</Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>FBT Staking Reward</span>
+                        <Badge variant="outline" className="bg-green-50 text-green-700">Completed</Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Cross-chain Bridge</span>
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700">Processing</Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Gas Optimization</span>
+                        <Badge variant="outline" className="bg-green-50 text-green-700">Completed</Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="onchainkit" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Network className="w-5 h-5" />
+                <span>OnchainKit Integration</span>
+                <Badge variant="outline" className="bg-green-50 text-green-700">Seamless UX</Badge>
+              </CardTitle>
+              <CardDescription>
+                Production-ready Web3 UI components for seamless user experience on Base
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">UI Components Active</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-indigo-50 rounded">
+                      <div>
+                        <p className="font-medium">Identity & Avatars</p>
+                        <p className="text-sm text-muted-foreground">ENS names and user avatars</p>
+                      </div>
+                      <Badge variant="outline" className="bg-green-50 text-green-700">Deployed</Badge>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-cyan-50 rounded">
+                      <div>
+                        <p className="font-medium">Transaction Components</p>
+                        <p className="text-sm text-muted-foreground">Sponsored transactions</p>
+                      </div>
+                      <Badge variant="outline" className="bg-green-50 text-green-700">Deployed</Badge>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-emerald-50 rounded">
+                      <div>
+                        <p className="font-medium">Wallet Integration</p>
+                        <p className="text-sm text-muted-foreground">Seamless wallet connection</p>
+                      </div>
+                      <Badge variant="outline" className="bg-green-50 text-green-700">Deployed</Badge>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-rose-50 rounded">
+                      <div>
+                        <p className="font-medium">Payment Flows</p>
+                        <p className="text-sm text-muted-foreground">USDC and FBT transactions</p>
+                      </div>
+                      <Badge variant="outline" className="bg-green-50 text-green-700">Deployed</Badge>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Integration Benefits</h3>
+                  <div className="space-y-3">
+                    <div className="border rounded-lg p-3">
+                      <h4 className="font-medium text-green-600">Gasless Transactions</h4>
+                      <p className="text-sm text-muted-foreground">Users pay in USDC, not ETH</p>
+                    </div>
+                    <div className="border rounded-lg p-3">
+                      <h4 className="font-medium text-blue-600">One-Click Payments</h4>
+                      <p className="text-sm text-muted-foreground">Streamlined payment UX</p>
+                    </div>
+                    <div className="border rounded-lg p-3">
+                      <h4 className="font-medium text-purple-600">Smart Routing</h4>
+                      <p className="text-sm text-muted-foreground">Optimal transaction batching</p>
+                    </div>
+                    <div className="border rounded-lg p-3">
+                      <h4 className="font-medium text-orange-600">Real-time Status</h4>
+                      <p className="text-sm text-muted-foreground">Live transaction tracking</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="text-center p-4 border rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">98.7%</div>
+                  <p className="text-sm text-muted-foreground">Transaction Success Rate</p>
+                </div>
+                <div className="text-center p-4 border rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">1.2s</div>
+                  <p className="text-sm text-muted-foreground">Average Confirmation</p>
+                </div>
+                <div className="text-center p-4 border rounded-lg">
+                  <div className="text-2xl font-bold text-purple-600">$0.02</div>
+                  <p className="text-sm text-muted-foreground">Average Gas Cost</p>
                 </div>
               </div>
             </CardContent>
