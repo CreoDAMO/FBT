@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
+import AuthLayout from "./AuthLayout";
 import Sidebar from "./Sidebar";
 import TopHeader from "./TopHeader";
 import Dashboard from "@/pages/Dashboard";
@@ -78,6 +80,7 @@ export default function MainLayout() {
   const [location] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [currentSection, setCurrentSection] = useState<SectionKey>("dashboard");
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     const path = location.substring(1) || "dashboard";
@@ -94,24 +97,26 @@ export default function MainLayout() {
   const { title, subtitle } = sections[currentSection];
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar 
-        isOpen={sidebarOpen} 
-        currentSection={currentSection}
-        onSectionChange={setCurrentSection}
-      />
-      
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <TopHeader 
-          title={title}
-          subtitle={subtitle}
-          onToggleSidebar={toggleSidebar}
+    <AuthLayout>
+      <div className="flex h-screen overflow-hidden">
+        <Sidebar 
+          isOpen={sidebarOpen} 
+          currentSection={currentSection}
+          onSectionChange={(section: string) => setCurrentSection(section as SectionKey)}
         />
         
-        <main className="flex-1 overflow-auto bg-gray-50">
-          <CurrentComponent />
-        </main>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <TopHeader 
+            title={title}
+            subtitle={subtitle}
+            onToggleSidebar={toggleSidebar}
+          />
+          
+          <main className="flex-1 overflow-auto bg-gray-50">
+            <CurrentComponent />
+          </main>
+        </div>
       </div>
-    </div>
+    </AuthLayout>
   );
 }

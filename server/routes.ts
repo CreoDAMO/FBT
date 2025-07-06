@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer } from "ws";
 import { storage } from "./storage";
-import { insertUserSchema, insertOrderSchema, insertInvestmentSchema, insertSmartContractSchema } from "@shared/schema";
+import { insertUserSchema, insertOrderSchema, insertInvestmentSchema, insertSmartContractSchema, insertMenuItemSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -161,6 +161,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Order update error:", error);
       res.status(500).json({ message: "Failed to update order" });
+    }
+  });
+
+  app.put("/api/orders/:id", async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      const updates = req.body;
+      const order = await storage.updateOrder(orderId, updates);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      res.json(order);
+    } catch (error) {
+      console.error("Order update error:", error);
+      res.status(500).json({ message: "Failed to update order" });
+    }
+  });
+
+  // Menu item routes
+  app.get("/api/restaurants/:restaurantId/menu", async (req, res) => {
+    try {
+      const restaurantId = parseInt(req.params.restaurantId);
+      const menuItems = await storage.getMenuItemsByRestaurant(restaurantId);
+      res.json(menuItems);
+    } catch (error) {
+      console.error("Menu items fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch menu items" });
+    }
+  });
+
+  app.post("/api/menu-items", async (req, res) => {
+    try {
+      const menuItemData = insertMenuItemSchema.parse(req.body);
+      const menuItem = await storage.createMenuItem(menuItemData);
+      res.json(menuItem);
+    } catch (error) {
+      console.error("Menu item creation error:", error);
+      res.status(500).json({ message: "Failed to create menu item" });
+    }
+  });
+
+  app.put("/api/menu-items/:id", async (req, res) => {
+    try {
+      const menuItemId = parseInt(req.params.id);
+      const updates = insertMenuItemSchema.partial().parse(req.body);
+      const menuItem = await storage.updateMenuItem(menuItemId, updates);
+      if (!menuItem) {
+        return res.status(404).json({ message: "Menu item not found" });
+      }
+      res.json(menuItem);
+    } catch (error) {
+      console.error("Menu item update error:", error);
+      res.status(500).json({ message: "Failed to update menu item" });
+    }
+  });
+
+  // Merchant-specific routes
+  app.get("/api/restaurants/merchant/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const restaurants = await storage.getRestaurantsByOwner(userId);
+      res.json(restaurants[0] || null); // Return first restaurant for merchant
+    } catch (error) {
+      console.error("Merchant restaurant fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch restaurant" });
+    }
+  });
+
+  app.get("/api/orders/restaurant/:restaurantId", async (req, res) => {
+    try {
+      const restaurantId = parseInt(req.params.restaurantId);
+      const orders = await storage.getOrdersByRestaurant(restaurantId);
+      res.json(orders);
+    } catch (error) {
+      console.error("Restaurant orders fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
+  app.get("/api/orders/customer/:customerId", async (req, res) => {
+    try {
+      const customerId = parseInt(req.params.customerId);
+      const orders = await storage.getOrdersByCustomer(customerId);
+      res.json(orders);
+    } catch (error) {
+      console.error("Customer orders fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch orders" });
     }
   });
 
