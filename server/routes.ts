@@ -2,59 +2,13 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer } from "ws";
 import { storage } from "./storage";
+import { setupAuth } from "./auth";
 import { insertUserSchema, insertOrderSchema, insertInvestmentSchema, insertSmartContractSchema, insertMenuItemSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Authentication routes (simplified - in production use proper auth)
-  app.post("/api/auth/login", async (req, res) => {
-    try {
-      const { username, password } = req.body;
-      const user = await storage.getUserByUsername(username);
-      
-      if (!user) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-      
-      // In production, verify password hash
-      if (user.password !== password) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-      
-      res.json({ 
-        user: { 
-          id: user.id, 
-          username: user.username, 
-          email: user.email, 
-          role: user.role,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          walletAddress: user.walletAddress
-        } 
-      });
-    } catch (error) {
-      console.error("Login error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.post("/api/auth/register", async (req, res) => {
-    try {
-      const userData = insertUserSchema.parse(req.body);
-      const user = await storage.createUser(userData);
-      res.json({ 
-        user: { 
-          id: user.id, 
-          username: user.username, 
-          email: user.email, 
-          role: user.role 
-        } 
-      });
-    } catch (error) {
-      console.error("Registration error:", error);
-      res.status(500).json({ message: "Registration failed" });
-    }
-  });
+  // Setup comprehensive authentication system
+  const authenticateJWT = setupAuth(app);
 
   // Dashboard metrics
   app.get("/api/dashboard/metrics", async (req, res) => {

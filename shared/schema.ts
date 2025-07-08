@@ -15,6 +15,7 @@ export const users = pgTable("users", {
   phone: text("phone"),
   profileImageUrl: text("profile_image_url"),
   walletAddress: text("wallet_address"),
+  authProvider: text("auth_provider").default("email"), // email, google, facebook, metamask, coinbase
   kycStatus: text("kyc_status").default("pending"), // pending, verified, rejected
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
