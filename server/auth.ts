@@ -4,6 +4,7 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Strategy as FacebookStrategy } from "passport-facebook";
 import { Express } from "express";
 import session from "express-session";
+import MemoryStore from "memorystore";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
@@ -121,10 +122,15 @@ export async function sendPasswordResetEmail(email: string, resetToken: string):
 }
 
 export function setupAuth(app: Express) {
+  const MemoryStoreSession = MemoryStore(session);
+  
   const sessionSettings: session.SessionOptions = {
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    store: new MemoryStoreSession({
+      checkPeriod: 86400000, // prune expired entries every 24h
+    }),
     cookie: {
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
@@ -136,6 +142,20 @@ export function setupAuth(app: Express) {
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
+
+  // Passport serialization
+  passport.serializeUser((user: any, done) => {
+    done(null, user.id);
+  });
+
+  passport.deserializeUser(async (id: number, done) => {
+    try {
+      const user = await storage.getUser(id);
+      done(null, user);
+    } catch (error) {
+      done(error);
+    }
+  });
 
   // Local Strategy
   passport.use(
