@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +24,12 @@ import {
   Loader2
 } from "lucide-react";
 
-export default function LoginForm() {
+interface LoginFormProps {
+  onSuccess?: () => void;
+}
+
+export default function LoginForm({ onSuccess }: LoginFormProps) {
+  const [, setLocation] = useLocation();
   const { 
     login, 
     register, 
@@ -68,7 +74,13 @@ export default function LoginForm() {
 
     try {
       const result = await login(loginData.username, loginData.password);
-      if (!result.success) {
+      if (result.success) {
+        // Navigate to dashboard after successful login
+        setTimeout(() => {
+          setLocation("/");
+          if (onSuccess) onSuccess();
+        }, 100);
+      } else {
         setError(result.error?.message || "Login failed");
       }
     } catch (error) {
@@ -105,10 +117,15 @@ export default function LoginForm() {
         role: registerData.role
       });
       
-      if (!result.success) {
-        setError(result.error?.message || "Registration failed");
+      if (result.success) {
+        setSuccess("Account created successfully! Logging you in...");
+        // Auto-login after successful registration
+        setTimeout(() => {
+          setLocation("/");
+          if (onSuccess) onSuccess();
+        }, 1000);
       } else {
-        setSuccess("Account created successfully!");
+        setError(result.error?.message || "Registration failed");
       }
     } catch (error) {
       setError("An error occurred during registration");
