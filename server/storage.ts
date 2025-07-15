@@ -11,6 +11,13 @@ import {
   tokens,
   userTokenBalances,
   metrics,
+  aiChatSessions,
+  aiMessages,
+  aiVoiceMessages,
+  aiAgents,
+  aiAnalytics,
+  omniverseSessions,
+  omniverseInteractions,
   type User,
   type InsertUser,
   type Restaurant,
@@ -35,6 +42,20 @@ import {
   type InsertUserTokenBalance,
   type Metric,
   type InsertMetric,
+  type AiChatSession,
+  type InsertAiChatSession,
+  type AiMessage,
+  type InsertAiMessage,
+  type AiVoiceMessage,
+  type InsertAiVoiceMessage,
+  type AiAgent,
+  type InsertAiAgent,
+  type AiAnalytics,
+  type InsertAiAnalytics,
+  type OmniverseSession,
+  type InsertOmniverseSession,
+  type OmniverseInteraction,
+  type InsertOmniverseInteraction,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, sum, count } from "drizzle-orm";
@@ -124,6 +145,53 @@ export interface IStorage {
     revenue: string;
     fbtStaked: string;
   }>;
+
+  // AI Chat Session operations
+  getAiChatSession(id: string): Promise<AiChatSession | undefined>;
+  getAiChatSessionsByUser(userId: number): Promise<AiChatSession[]>;
+  createAiChatSession(session: InsertAiChatSession): Promise<AiChatSession>;
+  updateAiChatSession(id: string, updates: Partial<InsertAiChatSession>): Promise<AiChatSession | undefined>;
+  deleteAiChatSession(id: string): Promise<boolean>;
+
+  // AI Message operations
+  getAiMessage(id: number): Promise<AiMessage | undefined>;
+  getAiMessages(sessionId: string): Promise<AiMessage[]>;
+  createAiMessage(message: InsertAiMessage): Promise<AiMessage>;
+  deleteAiMessage(id: number): Promise<boolean>;
+
+  // AI Voice Message operations
+  getAiVoiceMessage(id: string): Promise<AiVoiceMessage | undefined>;
+  getAiVoiceMessages(sessionId: string): Promise<AiVoiceMessage[]>;
+  getAiVoiceMessagesByUser(userId: number): Promise<AiVoiceMessage[]>;
+  createAiVoiceMessage(voiceMessage: InsertAiVoiceMessage): Promise<AiVoiceMessage>;
+  deleteAiVoiceMessage(id: string): Promise<boolean>;
+
+  // AI Agent operations
+  getAiAgent(id: number): Promise<AiAgent | undefined>;
+  getAllAiAgents(): Promise<AiAgent[]>;
+  getActiveAiAgents(): Promise<AiAgent[]>;
+  createAiAgent(agent: InsertAiAgent): Promise<AiAgent>;
+  updateAiAgent(id: number, updates: Partial<InsertAiAgent>): Promise<AiAgent | undefined>;
+  deleteAiAgent(id: number): Promise<boolean>;
+
+  // AI Analytics operations
+  getAiAnalytics(id: number): Promise<AiAnalytics | undefined>;
+  getAiAnalyticsByUser(userId: number): Promise<AiAnalytics[]>;
+  getAiAnalyticsByProvider(provider: string): Promise<AiAnalytics[]>;
+  createAiAnalytics(analytics: InsertAiAnalytics): Promise<AiAnalytics>;
+
+  // Omniverse Session operations
+  getOmniverseSession(id: string): Promise<OmniverseSession | undefined>;
+  getOmniverseSessionsByUser(userId: number): Promise<OmniverseSession[]>;
+  createOmniverseSession(session: InsertOmniverseSession): Promise<OmniverseSession>;
+  updateOmniverseSession(id: string, updates: Partial<InsertOmniverseSession>): Promise<OmniverseSession | undefined>;
+  deleteOmniverseSession(id: string): Promise<boolean>;
+
+  // Omniverse Interaction operations
+  getOmniverseInteraction(id: number): Promise<OmniverseInteraction | undefined>;
+  getOmniverseInteractions(sessionId: string): Promise<OmniverseInteraction[]>;
+  createOmniverseInteraction(interaction: InsertOmniverseInteraction): Promise<OmniverseInteraction>;
+  deleteOmniverseInteraction(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -455,6 +523,168 @@ export class DatabaseStorage implements IStorage {
       revenue: revenueResult?.total || "0",
       fbtStaked: fbtStaked,
     };
+  }
+
+  // AI Chat Session operations
+  async getAiChatSession(id: string): Promise<AiChatSession | undefined> {
+    const [session] = await db.select().from(aiChatSessions).where(eq(aiChatSessions.id, id));
+    return session || undefined;
+  }
+
+  async getAiChatSessionsByUser(userId: number): Promise<AiChatSession[]> {
+    return await db.select().from(aiChatSessions).where(eq(aiChatSessions.userId, userId)).orderBy(desc(aiChatSessions.updatedAt));
+  }
+
+  async createAiChatSession(session: InsertAiChatSession): Promise<AiChatSession> {
+    const [createdSession] = await db.insert(aiChatSessions).values(session).returning();
+    return createdSession;
+  }
+
+  async updateAiChatSession(id: string, updates: Partial<InsertAiChatSession>): Promise<AiChatSession | undefined> {
+    const [session] = await db.update(aiChatSessions).set({ ...updates, updatedAt: new Date() }).where(eq(aiChatSessions.id, id)).returning();
+    return session || undefined;
+  }
+
+  async deleteAiChatSession(id: string): Promise<boolean> {
+    const result = await db.delete(aiChatSessions).where(eq(aiChatSessions.id, id));
+    return result.rowCount > 0;
+  }
+
+  // AI Message operations
+  async getAiMessage(id: number): Promise<AiMessage | undefined> {
+    const [message] = await db.select().from(aiMessages).where(eq(aiMessages.id, id));
+    return message || undefined;
+  }
+
+  async getAiMessages(sessionId: string): Promise<AiMessage[]> {
+    return await db.select().from(aiMessages).where(eq(aiMessages.sessionId, sessionId)).orderBy(aiMessages.timestamp);
+  }
+
+  async createAiMessage(message: InsertAiMessage): Promise<AiMessage> {
+    const [createdMessage] = await db.insert(aiMessages).values(message).returning();
+    return createdMessage;
+  }
+
+  async deleteAiMessage(id: number): Promise<boolean> {
+    const result = await db.delete(aiMessages).where(eq(aiMessages.id, id));
+    return result.rowCount > 0;
+  }
+
+  // AI Voice Message operations
+  async getAiVoiceMessage(id: string): Promise<AiVoiceMessage | undefined> {
+    const [voiceMessage] = await db.select().from(aiVoiceMessages).where(eq(aiVoiceMessages.id, id));
+    return voiceMessage || undefined;
+  }
+
+  async getAiVoiceMessages(sessionId: string): Promise<AiVoiceMessage[]> {
+    return await db.select().from(aiVoiceMessages).where(eq(aiVoiceMessages.sessionId, sessionId)).orderBy(aiVoiceMessages.createdAt);
+  }
+
+  async getAiVoiceMessagesByUser(userId: number): Promise<AiVoiceMessage[]> {
+    return await db.select().from(aiVoiceMessages).where(eq(aiVoiceMessages.userId, userId)).orderBy(desc(aiVoiceMessages.createdAt));
+  }
+
+  async createAiVoiceMessage(voiceMessage: InsertAiVoiceMessage): Promise<AiVoiceMessage> {
+    const [createdVoiceMessage] = await db.insert(aiVoiceMessages).values(voiceMessage).returning();
+    return createdVoiceMessage;
+  }
+
+  async deleteAiVoiceMessage(id: string): Promise<boolean> {
+    const result = await db.delete(aiVoiceMessages).where(eq(aiVoiceMessages.id, id));
+    return result.rowCount > 0;
+  }
+
+  // AI Agent operations
+  async getAiAgent(id: number): Promise<AiAgent | undefined> {
+    const [agent] = await db.select().from(aiAgents).where(eq(aiAgents.id, id));
+    return agent || undefined;
+  }
+
+  async getAllAiAgents(): Promise<AiAgent[]> {
+    return await db.select().from(aiAgents).orderBy(desc(aiAgents.createdAt));
+  }
+
+  async getActiveAiAgents(): Promise<AiAgent[]> {
+    return await db.select().from(aiAgents).where(eq(aiAgents.isActive, true)).orderBy(desc(aiAgents.createdAt));
+  }
+
+  async createAiAgent(agent: InsertAiAgent): Promise<AiAgent> {
+    const [createdAgent] = await db.insert(aiAgents).values(agent).returning();
+    return createdAgent;
+  }
+
+  async updateAiAgent(id: number, updates: Partial<InsertAiAgent>): Promise<AiAgent | undefined> {
+    const [agent] = await db.update(aiAgents).set({ ...updates, updatedAt: new Date() }).where(eq(aiAgents.id, id)).returning();
+    return agent || undefined;
+  }
+
+  async deleteAiAgent(id: number): Promise<boolean> {
+    const result = await db.delete(aiAgents).where(eq(aiAgents.id, id));
+    return result.rowCount > 0;
+  }
+
+  // AI Analytics operations
+  async getAiAnalytics(id: number): Promise<AiAnalytics | undefined> {
+    const [analytics] = await db.select().from(aiAnalytics).where(eq(aiAnalytics.id, id));
+    return analytics || undefined;
+  }
+
+  async getAiAnalyticsByUser(userId: number): Promise<AiAnalytics[]> {
+    return await db.select().from(aiAnalytics).where(eq(aiAnalytics.userId, userId)).orderBy(desc(aiAnalytics.createdAt));
+  }
+
+  async getAiAnalyticsByProvider(provider: string): Promise<AiAnalytics[]> {
+    return await db.select().from(aiAnalytics).where(eq(aiAnalytics.provider, provider)).orderBy(desc(aiAnalytics.createdAt));
+  }
+
+  async createAiAnalytics(analytics: InsertAiAnalytics): Promise<AiAnalytics> {
+    const [createdAnalytics] = await db.insert(aiAnalytics).values(analytics).returning();
+    return createdAnalytics;
+  }
+
+  // Omniverse Session operations
+  async getOmniverseSession(id: string): Promise<OmniverseSession | undefined> {
+    const [session] = await db.select().from(omniverseSessions).where(eq(omniverseSessions.id, id));
+    return session || undefined;
+  }
+
+  async getOmniverseSessionsByUser(userId: number): Promise<OmniverseSession[]> {
+    return await db.select().from(omniverseSessions).where(eq(omniverseSessions.userId, userId)).orderBy(desc(omniverseSessions.updatedAt));
+  }
+
+  async createOmniverseSession(session: InsertOmniverseSession): Promise<OmniverseSession> {
+    const [createdSession] = await db.insert(omniverseSessions).values(session).returning();
+    return createdSession;
+  }
+
+  async updateOmniverseSession(id: string, updates: Partial<InsertOmniverseSession>): Promise<OmniverseSession | undefined> {
+    const [session] = await db.update(omniverseSessions).set({ ...updates, updatedAt: new Date() }).where(eq(omniverseSessions.id, id)).returning();
+    return session || undefined;
+  }
+
+  async deleteOmniverseSession(id: string): Promise<boolean> {
+    const result = await db.delete(omniverseSessions).where(eq(omniverseSessions.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Omniverse Interaction operations
+  async getOmniverseInteraction(id: number): Promise<OmniverseInteraction | undefined> {
+    const [interaction] = await db.select().from(omniverseInteractions).where(eq(omniverseInteractions.id, id));
+    return interaction || undefined;
+  }
+
+  async getOmniverseInteractions(sessionId: string): Promise<OmniverseInteraction[]> {
+    return await db.select().from(omniverseInteractions).where(eq(omniverseInteractions.sessionId, sessionId)).orderBy(omniverseInteractions.timestamp);
+  }
+
+  async createOmniverseInteraction(interaction: InsertOmniverseInteraction): Promise<OmniverseInteraction> {
+    const [createdInteraction] = await db.insert(omniverseInteractions).values(interaction).returning();
+    return createdInteraction;
+  }
+
+  async deleteOmniverseInteraction(id: number): Promise<boolean> {
+    const result = await db.delete(omniverseInteractions).where(eq(omniverseInteractions.id, id));
+    return result.rowCount > 0;
   }
 }
 

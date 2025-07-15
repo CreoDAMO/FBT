@@ -11,7 +11,9 @@ import {
   Shield, 
   BarChart3, 
   Users,
-  Utensils
+  Utensils,
+  Bot,
+  Brain
 } from "lucide-react";
 
 interface SidebarProps {
@@ -44,6 +46,13 @@ const navigationSections = [
       { id: "admin", label: "Admin Panel", icon: Settings },
       { id: "contracts", label: "Smart Contracts", icon: File },
       { id: "compliance", label: "Compliance", icon: Shield },
+    ]
+  },
+  {
+    title: "AI & Advanced",
+    items: [
+      { id: "ai-studio", label: "AI Studio", icon: Bot },
+      { id: "omniverse", label: "Omniverse", icon: Brain },
     ]
   },
   {

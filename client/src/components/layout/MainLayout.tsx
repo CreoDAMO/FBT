@@ -16,6 +16,7 @@ import Compliance from "@/pages/Compliance";
 import Analytics from "@/pages/Analytics";
 import UserManagement from "@/pages/UserManagement";
 import InvestorDashboard from "@/pages/InvestorDashboard";
+import AIStudio from "@/pages/AIStudio";
 
 const sections = {
   dashboard: { 
@@ -77,6 +78,11 @@ const sections = {
     component: InvestorDashboard, 
     title: "Investor Dashboard", 
     subtitle: "White label business metrics and client management" 
+  },
+  "ai-studio": { 
+    component: AIStudio, 
+    title: "AI Studio", 
+    subtitle: "Advanced AI capabilities with multiple providers" 
   },
 };
 

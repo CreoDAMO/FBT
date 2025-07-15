@@ -5,6 +5,7 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { insertUserSchema, insertOrderSchema, insertInvestmentSchema, insertSmartContractSchema, insertMenuItemSchema } from "@shared/schema";
 import { z } from "zod";
+import { aiRoutes } from "./ai/routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup comprehensive authentication system
@@ -324,6 +325,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch analytics" });
     }
   });
+
+  // AI routes - protected with JWT authentication
+  app.use("/api/ai", authenticateJWT, aiRoutes);
 
   // WebSocket server for real-time updates
   const httpServer = createServer(app);

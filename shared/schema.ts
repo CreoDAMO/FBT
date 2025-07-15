@@ -205,6 +205,90 @@ export const metrics = pgTable("metrics", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// AI-related tables
+export const aiChatSessions = pgTable("ai_chat_sessions", {
+  id: text("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  title: text("title").notNull(),
+  provider: text("provider").notNull(), // openai, anthropic, xai, deepseek
+  model: text("model").notNull(),
+  isVoiceEnabled: boolean("is_voice_enabled").default(false).notNull(),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const aiMessages = pgTable("ai_messages", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").references(() => aiChatSessions.id).notNull(),
+  role: text("role").notNull(), // system, user, assistant
+  content: text("content").notNull(),
+  provider: text("provider"),
+  model: text("model"),
+  tokens: integer("tokens"),
+  cost: decimal("cost", { precision: 10, scale: 6 }),
+  timestamp: timestamp("timestamp", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const aiVoiceMessages = pgTable("ai_voice_messages", {
+  id: text("id").primaryKey(),
+  sessionId: text("session_id").references(() => aiChatSessions.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  text: text("text").notNull(),
+  audioUrl: text("audio_url"),
+  provider: text("provider").notNull(),
+  duration: decimal("duration", { precision: 8, scale: 3 }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const aiAgents = pgTable("ai_agents", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  systemPrompt: text("system_prompt").notNull(),
+  provider: text("provider").notNull(),
+  model: text("model").notNull(),
+  features: text("features").array().notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const aiAnalytics = pgTable("ai_analytics", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  provider: text("provider").notNull(),
+  model: text("model").notNull(),
+  requestType: text("request_type").notNull(), // chat, voice, image, etc.
+  tokenUsage: integer("token_usage"),
+  cost: decimal("cost", { precision: 10, scale: 6 }),
+  responseTime: decimal("response_time", { precision: 8, scale: 3 }), // in milliseconds
+  success: boolean("success").default(true).notNull(),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// NVIDIA Omniverse integration
+export const omniverseSessions = pgTable("omniverse_sessions", {
+  id: text("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  appId: text("app_id").notNull(),
+  streamUrl: text("stream_url").notNull(),
+  status: text("status").notNull(), // active, inactive, error
+  config: jsonb("config").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const omniverseInteractions = pgTable("omniverse_interactions", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").references(() => omniverseSessions.id).notNull(),
+  interactionType: text("interaction_type").notNull(), // input, output, control
+  data: jsonb("data").notNull(),
+  timestamp: timestamp("timestamp", { withTimezone: true }).defaultNow().notNull(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many, one }) => ({
   restaurants: many(restaurants),
@@ -215,6 +299,10 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   }),
   investments: many(investments),
   tokenBalances: many(userTokenBalances),
+  aiChatSessions: many(aiChatSessions),
+  aiVoiceMessages: many(aiVoiceMessages),
+  aiAnalytics: many(aiAnalytics),
+  omniverseSessions: many(omniverseSessions),
 }));
 
 export const restaurantsRelations = relations(restaurants, ({ one, many }) => ({
@@ -306,6 +394,56 @@ export const userTokenBalancesRelations = relations(userTokenBalances, ({ one })
   }),
 }));
 
+// AI-related relations
+export const aiChatSessionsRelations = relations(aiChatSessions, ({ one, many }) => ({
+  user: one(users, {
+    fields: [aiChatSessions.userId],
+    references: [users.id],
+  }),
+  messages: many(aiMessages),
+  voiceMessages: many(aiVoiceMessages),
+}));
+
+export const aiMessagesRelations = relations(aiMessages, ({ one }) => ({
+  session: one(aiChatSessions, {
+    fields: [aiMessages.sessionId],
+    references: [aiChatSessions.id],
+  }),
+}));
+
+export const aiVoiceMessagesRelations = relations(aiVoiceMessages, ({ one }) => ({
+  session: one(aiChatSessions, {
+    fields: [aiVoiceMessages.sessionId],
+    references: [aiChatSessions.id],
+  }),
+  user: one(users, {
+    fields: [aiVoiceMessages.userId],
+    references: [users.id],
+  }),
+}));
+
+export const aiAnalyticsRelations = relations(aiAnalytics, ({ one }) => ({
+  user: one(users, {
+    fields: [aiAnalytics.userId],
+    references: [users.id],
+  }),
+}));
+
+export const omniverseSessionsRelations = relations(omniverseSessions, ({ one, many }) => ({
+  user: one(users, {
+    fields: [omniverseSessions.userId],
+    references: [users.id],
+  }),
+  interactions: many(omniverseInteractions),
+}));
+
+export const omniverseInteractionsRelations = relations(omniverseInteractions, ({ one }) => ({
+  session: one(omniverseSessions, {
+    fields: [omniverseInteractions.sessionId],
+    references: [omniverseSessions.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertRestaurantSchema = createInsertSchema(restaurants).omit({ id: true, createdAt: true, updatedAt: true });
@@ -319,6 +457,15 @@ export const insertSmartContractSchema = createInsertSchema(smartContracts).omit
 export const insertTokenSchema = createInsertSchema(tokens).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertUserTokenBalanceSchema = createInsertSchema(userTokenBalances).omit({ id: true });
 export const insertMetricSchema = createInsertSchema(metrics).omit({ id: true, createdAt: true });
+
+// AI-related insert schemas
+export const insertAiChatSessionSchema = createInsertSchema(aiChatSessions).omit({ createdAt: true, updatedAt: true });
+export const insertAiMessageSchema = createInsertSchema(aiMessages).omit({ id: true, timestamp: true });
+export const insertAiVoiceMessageSchema = createInsertSchema(aiVoiceMessages).omit({ createdAt: true });
+export const insertAiAgentSchema = createInsertSchema(aiAgents).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertAiAnalyticsSchema = createInsertSchema(aiAnalytics).omit({ id: true, createdAt: true });
+export const insertOmniverseSessionSchema = createInsertSchema(omniverseSessions).omit({ createdAt: true, updatedAt: true });
+export const insertOmniverseInteractionSchema = createInsertSchema(omniverseInteractions).omit({ id: true, timestamp: true });
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -345,3 +492,19 @@ export type UserTokenBalance = typeof userTokenBalances.$inferSelect;
 export type InsertUserTokenBalance = z.infer<typeof insertUserTokenBalanceSchema>;
 export type Metric = typeof metrics.$inferSelect;
 export type InsertMetric = z.infer<typeof insertMetricSchema>;
+
+// AI-related types
+export type AiChatSession = typeof aiChatSessions.$inferSelect;
+export type InsertAiChatSession = z.infer<typeof insertAiChatSessionSchema>;
+export type AiMessage = typeof aiMessages.$inferSelect;
+export type InsertAiMessage = z.infer<typeof insertAiMessageSchema>;
+export type AiVoiceMessage = typeof aiVoiceMessages.$inferSelect;
+export type InsertAiVoiceMessage = z.infer<typeof insertAiVoiceMessageSchema>;
+export type AiAgent = typeof aiAgents.$inferSelect;
+export type InsertAiAgent = z.infer<typeof insertAiAgentSchema>;
+export type AiAnalytics = typeof aiAnalytics.$inferSelect;
+export type InsertAiAnalytics = z.infer<typeof insertAiAnalyticsSchema>;
+export type OmniverseSession = typeof omniverseSessions.$inferSelect;
+export type InsertOmniverseSession = z.infer<typeof insertOmniverseSessionSchema>;
+export type OmniverseInteraction = typeof omniverseInteractions.$inferSelect;
+export type InsertOmniverseInteraction = z.infer<typeof insertOmniverseInteractionSchema>;
