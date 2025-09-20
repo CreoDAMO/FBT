@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Route, Switch, Redirect } from 'wouter';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/hooks/useAuth';
 import ProtectedRoute from '@/lib/protected-route';
@@ -75,40 +76,27 @@ function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <Router>
-            <div className="App">
-              <Routes>
-                <Route path="/auth" element={<AuthLayout><AuthPage /></AuthLayout>} />
-                <Route
-                  path="/*"
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout>
-                        <Routes>
-                          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                          <Route path="/dashboard" element={<Dashboard />} />
-                          <Route path="/orders" element={<OrderSystem />} />
-                          <Route path="/driver" element={<DriverPortal />} />
-                          <Route path="/merchant" element={<MerchantHub />} />
-                          <Route path="/crowdfunding" element={<Crowdfunding />} />
-                          <Route path="/tokenomics" element={<Tokenomics />} />
-                          <Route path="/smart-contracts" element={<SmartContracts />} />
-                          <Route path="/admin" element={<AdminPanel />} />
-                          <Route path="/users" element={<UserManagement />} />
-                          <Route path="/compliance" element={<Compliance />} />
-                          <Route path="/analytics" element={<Analytics />} />
-                          <Route path="/investor" element={<InvestorDashboard />} />
-                          <Route path="/ai-studio" element={<AIStudio />} />
-                          <Route path="*" element={<NotFound />} />
-                        </Routes>
-                      </MainLayout>
-                    </ProtectedRoute>
-                  }
-                />
-              </Routes>
-              <Toaster />
-            </div>
-          </Router>
+          <div className="App">
+            <Switch>
+              <Route path="/auth" component={() => <AuthLayout><AuthPage /></AuthLayout>} />
+              <ProtectedRoute path="/dashboard" component={Dashboard} />
+              <ProtectedRoute path="/orders" component={OrderSystem} />
+              <ProtectedRoute path="/driver" component={DriverPortal} />
+              <ProtectedRoute path="/merchant" component={MerchantHub} />
+              <ProtectedRoute path="/crowdfunding" component={Crowdfunding} />
+              <ProtectedRoute path="/tokenomics" component={Tokenomics} />
+              <ProtectedRoute path="/smart-contracts" component={SmartContracts} />
+              <ProtectedRoute path="/admin" component={AdminPanel} />
+              <ProtectedRoute path="/users" component={UserManagement} />
+              <ProtectedRoute path="/compliance" component={Compliance} />
+              <ProtectedRoute path="/analytics" component={Analytics} />
+              <ProtectedRoute path="/investor" component={InvestorDashboard} />
+              <ProtectedRoute path="/ai-studio" component={AIStudio} />
+              <Route path="/" component={() => <Redirect to="/dashboard" />} />
+              <Route component={NotFound} />
+            </Switch>
+            <Toaster />
+          </div>
         </AuthProvider>
       </QueryClientProvider>
     </ErrorBoundary>

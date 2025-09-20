@@ -4,12 +4,16 @@ import { Circle, CircleEnvironments } from "@circle-fin/circle-sdk";
 import { nanoid } from "nanoid";
 // Polyfill Buffer for browser environment
 let Buffer: any;
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && typeof (window as any).Buffer === 'undefined') {
   try {
-    Buffer = (await import('buffer')).Buffer;
-    (window as any).Buffer = Buffer;
+    import('buffer').then(bufferModule => {
+      (window as any).Buffer = bufferModule.Buffer;
+      Buffer = bufferModule.Buffer;
+    }).catch(e => {
+      console.warn('Buffer polyfill not available:', e);
+    });
   } catch (e) {
-    console.warn('Buffer polyfill not available');
+    console.warn('Buffer polyfill not available:', e);
   }
 }
 

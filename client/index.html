@@ -12,6 +12,10 @@
       if (typeof global === 'undefined') {
         var global = globalThis;
       }
+      // Polyfill Buffer for browser environment
+      if (typeof Buffer === 'undefined') {
+        window.Buffer = globalThis.Buffer || {};
+      }
     </script>
   </head>
   <body>

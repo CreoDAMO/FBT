@@ -18,123 +18,61 @@ import UserManagement from "@/pages/UserManagement";
 import InvestorDashboard from "@/pages/InvestorDashboard";
 import AIStudio from "@/pages/AIStudio";
 
-const sections = {
-  dashboard: {
-    component: Dashboard,
-    title: "Dashboard Overview",
-    subtitle: "Real-time platform metrics and insights",
-  },
-  ordering: {
-    component: OrderSystem,
-    title: "Order System",
-    subtitle: "Customer ordering interface and order tracking",
-  },
-  driver: {
-    component: DriverPortal,
-    title: "Driver Portal",
-    subtitle: "Delivery management and earnings tracking",
-  },
-  merchant: {
-    component: MerchantHub,
-    title: "Merchant Hub",
-    subtitle: "Restaurant management and analytics",
-  },
-  crowdfunding: {
-    component: Crowdfunding,
-    title: "Crowdfunding Portal",
-    subtitle: "Investment opportunities and funding progress",
-  },
-  tokenomics: {
-    component: Tokenomics,
-    title: "$FBT Tokenomics",
-    subtitle: "Token distribution, staking rewards, and DAO governance",
-  },
-  admin: {
-    component: AdminPanel,
-    title: "Admin Panel",
-    subtitle: "Platform administration and white-label management",
-  },
-  contracts: {
-    component: SmartContracts,
-    title: "Smart Contracts",
-    subtitle: "Deploy and manage blockchain contracts",
-  },
-  compliance: {
-    component: Compliance,
-    title: "Compliance Dashboard",
-    subtitle: "KYC/AML verification, audit logs, and regulatory compliance",
-  },
-  analytics: {
-    component: Analytics,
-    title: "Analytics Dashboard",
-    subtitle: "Cross-platform metrics and business intelligence",
-  },
-  users: {
-    component: UserManagement,
-    title: "User Management",
-    subtitle: "Authentication, profiles, and role-based access control",
-  },
-  investor: {
-    component: InvestorDashboard,
-    title: "Investor Dashboard",
-    subtitle: "White label business metrics and client management",
-  },
-  "ai-studio": {
-    component: AIStudio,
-    title: "AI Studio",
-    subtitle: "Advanced AI capabilities with multiple providers",
-  },
-  omniverse: {
-    component: AIStudio,
-    title: "Omniverse",
-    subtitle: "Metaverse integration and virtual experiences",
-  },
-};
+interface MainLayoutProps {
+  children: React.ReactNode;
+}
 
-type SectionKey = keyof typeof sections;
-
-export default function MainLayout() {
+export default function MainLayout({ children }: MainLayoutProps) {
   const [location] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [currentSection, setCurrentSection] = useState<SectionKey>("dashboard");
   const { isAuthenticated } = useAuth();
-
-  useEffect(() => {
-    const path = location.substring(1) || "dashboard";
-    if (path in sections) {
-      setCurrentSection(path as SectionKey);
-    }
-  }, [location]);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
-  const CurrentComponent = sections[currentSection].component;
-  const { title, subtitle } = sections[currentSection];
+  // Get current section from location
+  const currentSection = location.substring(1) || "dashboard";
+
+  // Map sections to titles
+  const sectionTitles: Record<string, { title: string; subtitle: string }> = {
+    dashboard: { title: "Dashboard", subtitle: "Overview of your FastBite Pro operations" },
+    orders: { title: "Order Management", subtitle: "Track and manage customer orders" },
+    driver: { title: "Driver Portal", subtitle: "Driver management and tracking" },
+    merchant: { title: "Merchant Hub", subtitle: "Restaurant and merchant management" },
+    crowdfunding: { title: "Crowdfunding", subtitle: "Investment and funding management" },
+    tokenomics: { title: "Tokenomics", subtitle: "Token economics and blockchain features" },
+    "smart-contracts": { title: "Smart Contracts", subtitle: "Deploy and manage blockchain contracts" },
+    admin: { title: "Admin Panel", subtitle: "System administration and settings" },
+    compliance: { title: "Compliance", subtitle: "Regulatory compliance and KYC" },
+    analytics: { title: "Analytics", subtitle: "Business intelligence and reporting" },
+    users: { title: "User Management", subtitle: "Manage system users and permissions" },
+    investor: { title: "Investor Dashboard", subtitle: "Investment tracking and portfolio management" },
+    "ai-studio": { title: "AI Studio", subtitle: "AI-powered tools and automation" }
+  };
+
+  const { title, subtitle } = sectionTitles[currentSection] || { title: "FastBite Pro", subtitle: "Multi-Platform Food Delivery System" };
 
   return (
-    <AuthLayout>
-      <div className="flex h-screen overflow-hidden">
-        <Sidebar
-          isOpen={sidebarOpen}
-          currentSection={currentSection}
-          onSectionChange={(section: string) => setCurrentSection(section as SectionKey)}
-          onClose={() => setSidebarOpen(false)}
+    <div className="flex h-screen overflow-hidden">
+      <Sidebar
+        isOpen={sidebarOpen}
+        currentSection={currentSection}
+        onSectionChange={() => {}}
+        onClose={() => setSidebarOpen(false)}
+      />
+
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <TopHeader
+          title={title}
+          subtitle={subtitle}
+          onToggleSidebar={toggleSidebar}
         />
 
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <TopHeader
-            title={title}
-            subtitle={subtitle}
-            onToggleSidebar={toggleSidebar}
-          />
-
-          <main className="flex-1 overflow-auto bg-gray-50">
-            <CurrentComponent />
-          </main>
-        </div>
+        <main className="flex-1 overflow-auto bg-gray-50">
+          {children}
+        </main>
       </div>
-    </AuthLayout>
+    </div>
   );
 }
