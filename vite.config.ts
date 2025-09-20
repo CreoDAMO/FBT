@@ -34,10 +34,17 @@ export default defineConfig({
     hmr: {
       port: 5173,
       host: "0.0.0.0",
+      clientPort: 443,
     },
     fs: {
       strict: true,
       deny: ["**/.*"],
     },
+  },
+  define: {
+    global: 'globalThis',
+  },
+  optimizeDeps: {
+    include: ['buffer'],
   },
 });
