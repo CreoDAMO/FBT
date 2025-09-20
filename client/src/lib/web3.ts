@@ -2,18 +2,22 @@ import { ethers } from "ethers";
 import { Coinbase, Wallet as CoinbaseWallet } from "@coinbase/coinbase-sdk";
 import { Circle, CircleEnvironments } from "@circle-fin/circle-sdk";
 import { nanoid } from "nanoid";
-import { Buffer } from "buffer";
+// Polyfill Buffer for browser environment
+let Buffer: any;
+if (typeof window !== 'undefined') {
+  try {
+    Buffer = (await import('buffer')).Buffer;
+    (window as any).Buffer = Buffer;
+  } catch (e) {
+    console.warn('Buffer polyfill not available');
+  }
+}
 
 // OpenZeppelin SDK imports for enhanced security and governance
 declare global {
   interface Window {
-    Buffer: typeof Buffer;
+    Buffer?: any;
   }
-}
-
-// Ensure Buffer is available globally
-if (typeof window !== 'undefined') {
-  window.Buffer = Buffer;
 }
 
 // Enhanced interfaces for production features

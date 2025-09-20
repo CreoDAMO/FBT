@@ -1,4 +1,3 @@
-
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
@@ -36,6 +35,11 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       external: [],
+      output: {
+        globals: {
+          buffer: 'Buffer'
+        }
+      }
     },
   },
   optimizeDeps: {
