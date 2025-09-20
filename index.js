@@ -1191,7 +1191,14 @@ function setupAuth(app2) {
       });
     })(req, res, next);
   });
-  app2.post("/api/auth/register", async (req, res) => {
+  const registerLimiter = rateLimit({
+    windowMs: 15 * 60 * 1e3,
+    // 15 minutes
+    max: 5,
+    // limit each IP to 5 registration attempts per windowMs
+    message: { message: "Too many registration attempts, please try again later." }
+  });
+  app2.post("/api/auth/register", registerLimiter, async (req, res) => {
     try {
       const userData = insertUserSchema.parse(req.body);
       const existingUser = await storage.getUserByUsername(userData.username) || await storage.getUserByEmail(userData.email);
