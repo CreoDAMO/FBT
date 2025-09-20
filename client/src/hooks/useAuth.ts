@@ -91,16 +91,42 @@ export function useAuth() {
     try {
       // Check if MetaMask is installed
       if (typeof window.ethereum === 'undefined') {
-        return { success: false, error: { message: 'MetaMask is not installed' } };
+        return { success: false, error: { message: 'MetaMask is not installed. Please install it from metamask.io' } };
       }
 
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      // Check if MetaMask is locked
+      if (window.ethereum.isMetaMask) {
+        try {
+          const isUnlocked = await window.ethereum._metamask?.isUnlocked?.();
+          if (isUnlocked === false) {
+            return { success: false, error: { message: 'MetaMask is locked. Please unlock your wallet.' } };
+          }
+        } catch (e) {
+          // Ignore if isUnlocked method is not available
+        }
+      }
+
+      let accounts;
+      try {
+        accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      } catch (error: any) {
+        if (error.code === 4001) {
+          return { success: false, error: { message: 'User rejected the connection request' } };
+        } else if (error.code === -32002) {
+          return { success: false, error: { message: 'MetaMask connection request already pending' } };
+        }
+        throw error;
+      }
       
-      if (accounts.length === 0) {
-        return { success: false, error: { message: 'No accounts found' } };
+      if (!accounts || accounts.length === 0) {
+        return { success: false, error: { message: 'No accounts found. Please check your MetaMask wallet.' } };
       }
 
       const walletAddress = accounts[0];
+      
+      // Get chain ID for additional verification
+      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+      
       const response = await fetch('/api/auth/wallet-login', {
         method: 'POST',
         headers: {
@@ -108,7 +134,8 @@ export function useAuth() {
         },
         body: JSON.stringify({ 
           walletAddress, 
-          provider: 'metamask' 
+          provider: 'metamask',
+          chainId: parseInt(chainId, 16)
         }),
       });
 
@@ -121,11 +148,19 @@ export function useAuth() {
         localStorage.setItem('authToken', data.token);
         return { success: true };
       } else {
-        return { success: false, error: { message: data.message } };
+        return { success: false, error: { message: data.message || 'Authentication failed' } };
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('MetaMask login error:', error);
-      return { success: false, error: { message: 'Failed to connect with MetaMask' } };
+      let errorMessage = 'Failed to connect with MetaMask';
+      
+      if (error.message?.includes('network')) {
+        errorMessage = 'Network error. Please check your connection.';
+      } else if (error.message?.includes('rejected')) {
+        errorMessage = 'Connection request was rejected';
+      }
+      
+      return { success: false, error: { message: errorMessage } };
     }
   };
 

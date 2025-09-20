@@ -141,7 +141,18 @@ export class Web3Service {
 
   // Check if MetaMask or compatible wallet is available
   static isWalletAvailable(): boolean {
-    return typeof window !== "undefined" && !!window.ethereum;
+    if (typeof window === "undefined") return false;
+    
+    // Check for MetaMask specifically
+    if (window.ethereum?.isMetaMask) return true;
+    
+    // Check for any Ethereum provider
+    if (window.ethereum) return true;
+    
+    // Check for legacy web3 provider
+    if (window.web3?.currentProvider) return true;
+    
+    return false;
   }
 
   // Create Coinbase CDP Wallet for production payments
@@ -301,8 +312,28 @@ export class Web3Service {
         throw new Error("No wallet found. Please install MetaMask or Coinbase Wallet.");
       }
 
-      // Request account access
-      await window.ethereum.request({ method: "eth_requestAccounts" });
+      // Check if MetaMask is locked
+      if (window.ethereum?.isMetaMask) {
+        const isUnlocked = await window.ethereum._metamask?.isUnlocked?.();
+        if (isUnlocked === false) {
+          throw new Error("MetaMask is locked. Please unlock your wallet.");
+        }
+      }
+
+      // Request account access with better error handling
+      let accounts;
+      try {
+        accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      } catch (error: any) {
+        if (error.code === 4001) {
+          throw new Error("User rejected the connection request.");
+        }
+        throw new Error("Failed to connect to wallet: " + error.message);
+      }
+
+      if (!accounts || accounts.length === 0) {
+        throw new Error("No accounts found. Please check your wallet connection.");
+      }
 
       // Create provider and signer
       this.provider = new ethers.BrowserProvider(window.ethereum);
@@ -319,14 +350,16 @@ export class Web3Service {
       // Set up event listeners
       this.setupEventListeners();
 
+      console.log("Wallet connected successfully:", { address, chainId: this.chainId });
+
       return {
         address,
         chainId: this.chainId,
         balance: ethers.formatEther(balance),
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error("Wallet connection failed:", error);
-      return null;
+      throw error;
     }
   }
 
@@ -599,6 +632,18 @@ export const CONTRACT_ABIS = {
 // Extend window object for TypeScript
 declare global {
   interface Window {
-    ethereum?: any;
+    ethereum?: {
+      isMetaMask?: boolean;
+      isCoinbaseWallet?: boolean;
+      request: (args: { method: string; params?: any[] }) => Promise<any>;
+      on: (event: string, handler: (params: any) => void) => void;
+      removeListener: (event: string, handler: (params: any) => void) => void;
+      _metamask?: {
+        isUnlocked?: () => Promise<boolean>;
+      };
+    };
+    web3?: {
+      currentProvider?: any;
+    };
   }
 }
