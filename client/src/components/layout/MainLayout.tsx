@@ -84,6 +84,11 @@ const sections = {
     title: "AI Studio", 
     subtitle: "Advanced AI capabilities with multiple providers" 
   },
+  omniverse: { 
+    component: AIStudio, 
+    title: "Omniverse", 
+    subtitle: "Metaverse integration and virtual experiences" 
+  },
 };
 
 type SectionKey = keyof typeof sections;

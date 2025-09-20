@@ -23,7 +23,7 @@
   --destructive-foreground: hsl(60, 9.1%, 97.8%);
   --ring: hsl(20, 14.3%, 4.1%);
   --radius: 0.5rem;
-  
+
   /* FastBite Pro custom colors */
   --fastbite-blue-50: hsl(214, 100%, 97%);
   --fastbite-blue-500: hsl(207, 90%, 54%);
@@ -126,53 +126,82 @@
 
   /* Mobile-friendly sidebar overlay */
   .mobile-overlay {
-    @apply fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 40;
   }
-  
+
+  /* Sidebar scrolling styles */
+  .sidebar-section {
+    scroll-margin-top: 1rem;
+  }
+
+  /* Custom scrollbar for sidebar */
+  nav::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  nav::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  nav::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 2px;
+  }
+
+  nav::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+
   .nav-item {
     @apply transition-all duration-200 ease-in-out;
   }
-  
+
   .nav-item.active {
     @apply bg-blue-50 text-blue-700 border-r-2 border-blue-500;
   }
-  
+
   .sidebar-section {
     @apply mb-6;
   }
-  
+
   .sidebar-section h3 {
     @apply text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3;
   }
-  
+
   .metric-card {
     @apply bg-white p-6 rounded-xl shadow-sm border border-gray-200 transition-shadow hover:shadow-md;
   }
-  
+
   .section-content {
     @apply min-h-screen;
   }
-  
+
   .fastbite-blue {
     color: hsl(var(--fastbite-blue-500));
   }
-  
+
   .fastbite-orange {
     color: hsl(var(--fastbite-orange-500));
   }
-  
+
   .bg-fastbite-blue {
     background-color: hsl(var(--fastbite-blue-500));
   }
-  
+
   .bg-fastbite-orange {
     background-color: hsl(var(--fastbite-orange-500));
   }
-  
+
   .bg-fastbite-blue-50 {
     background-color: hsl(var(--fastbite-blue-50));
   }
-  
+
   .text-fastbite-blue-700 {
     color: hsl(var(--fastbite-blue-700));
   }
@@ -183,11 +212,11 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
+
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
-  
+
   .animate-pulse-slow {
     animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
