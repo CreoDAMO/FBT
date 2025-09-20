@@ -115,6 +115,7 @@ export default function MainLayout() {
           isOpen={sidebarOpen} 
           currentSection={currentSection}
           onSectionChange={(section: string) => setCurrentSection(section as SectionKey)}
+          onClose={() => setSidebarOpen(false)}
         />
         
         <div className="flex-1 flex flex-col overflow-hidden">

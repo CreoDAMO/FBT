@@ -20,6 +20,7 @@ interface SidebarProps {
   isOpen: boolean;
   currentSection: string;
   onSectionChange: (section: string) => void;
+  onClose?: () => void;
 }
 
 const navigationSections = [
@@ -64,14 +65,14 @@ const navigationSections = [
   }
 ];
 
-export default function Sidebar({ isOpen, currentSection, onSectionChange }: SidebarProps) {
+export default function Sidebar({ isOpen, currentSection, onSectionChange, onClose }: SidebarProps) {
   return (
     <>
       {/* Mobile overlay */}
       {isOpen && (
         <div 
           className="mobile-overlay"
-          onClick={() => onSectionChange(currentSection)}
+          onClick={() => onClose && onClose()}
         />
       )}
       
