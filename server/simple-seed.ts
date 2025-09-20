@@ -3,7 +3,7 @@ import { storage } from "./storage";
 export async function simpleSeed() {
   try {
     console.log("Starting simple database seeding...");
-    
+
     const users = [
       {
         username: "admin",
@@ -49,13 +49,17 @@ export async function simpleSeed() {
         } else {
           console.log(`• User ${userData.username} already exists, skipping`);
         }
-      } catch (error) {
-        console.log(`• Failed to create user ${userData.username}:`, error.message);
+      } catch (error: any) {
+      if (error.message?.includes('certificate')) {
+        console.log(`• Database SSL configuration needed for user ${userData.username}`);
+      } else {
+        console.log(`• Failed to create user ${userData.username}: ${error.message}`);
       }
+    }
     }
 
     console.log("✓ Database seeding completed");
-    
+
   } catch (error) {
     console.error("Error seeding database:", error);
   }

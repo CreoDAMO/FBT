@@ -33,8 +33,8 @@ export default defineConfig({
     port: 5173,
     hmr: {
       overlay: false,
-      host: "0.0.0.0",
-      port: 5173,
+      port: 5174,
+      clientPort: 443,
     },
     fs: {
       strict: true,

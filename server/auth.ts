@@ -80,19 +80,19 @@ export function generatePasswordResetToken(email: string): string {
 export function validatePasswordResetToken(token: string): string | null {
   const tokenData = passwordResetTokens.get(token);
   if (!tokenData) return null;
-  
+
   if (new Date() > tokenData.expires) {
     passwordResetTokens.delete(token);
     return null;
   }
-  
+
   return tokenData.email;
 }
 
 export async function sendPasswordResetEmail(email: string, resetToken: string): Promise<boolean> {
   try {
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5000'}/reset-password?token=${resetToken}`;
-    
+
     await emailTransporter.sendMail({
       from: process.env.FROM_EMAIL || 'noreply@fastbitepro.com',
       to: email,
@@ -113,7 +113,7 @@ export async function sendPasswordResetEmail(email: string, resetToken: string):
         </div>
       `,
     });
-    
+
     return true;
   } catch (error) {
     console.error('Error sending password reset email:', error);
@@ -123,7 +123,7 @@ export async function sendPasswordResetEmail(email: string, resetToken: string):
 
 export function setupAuth(app: Express) {
   const MemoryStoreSession = MemoryStore(session);
-  
+
   const sessionSettings: session.SessionOptions = {
     secret: SESSION_SECRET,
     resave: false,
@@ -190,7 +190,7 @@ export function setupAuth(app: Express) {
         async (accessToken, refreshToken, profile, done) => {
           try {
             let user = await storage.getUserByEmail(profile.emails?.[0]?.value || '');
-            
+
             if (!user) {
               // Create new user
               const userData = {
@@ -202,7 +202,7 @@ export function setupAuth(app: Express) {
                 role: 'customer',
                 authProvider: 'google' as const,
               };
-              
+
               user = await storage.createUser(userData);
             } else if (!user.authProvider || user.authProvider === 'email') {
               // Link existing email account with Google
@@ -232,7 +232,7 @@ export function setupAuth(app: Express) {
         async (accessToken, refreshToken, profile, done) => {
           try {
             let user = await storage.getUserByEmail(profile.emails?.[0]?.value || '');
-            
+
             if (!user) {
               // Create new user
               const userData = {
@@ -244,7 +244,7 @@ export function setupAuth(app: Express) {
                 role: 'customer',
                 authProvider: 'facebook' as const,
               };
-              
+
               user = await storage.createUser(userData);
             } else if (!user.authProvider || user.authProvider === 'email') {
               // Link existing email account with Facebook
@@ -288,7 +288,7 @@ export function setupAuth(app: Express) {
   };
 
   // Routes
-  
+
   // Traditional login
   app.post("/api/auth/login", async (req, res, next) => {
     passport.authenticate("local", (err: any, user: any, info: any) => {
@@ -296,7 +296,7 @@ export function setupAuth(app: Express) {
         console.error("Login error:", err);
         return res.status(500).json({ message: "Internal server error" });
       }
-      
+
       if (!user) {
         return res.status(401).json({ message: info?.message || "Invalid credentials" });
       }
@@ -329,18 +329,18 @@ export function setupAuth(app: Express) {
   app.post("/api/auth/register", async (req, res) => {
     try {
       const userData = insertUserSchema.parse(req.body);
-      
+
       // Check if user already exists
       const existingUser = await storage.getUserByUsername(userData.username) || 
                           await storage.getUserByEmail(userData.email);
-      
+
       if (existingUser) {
         return res.status(400).json({ message: "User already exists" });
       }
 
       // Hash password
       const hashedPassword = await hashPassword(userData.password);
-      
+
       const user = await storage.createUser({
         ...userData,
         password: hashedPassword,
@@ -381,13 +381,13 @@ export function setupAuth(app: Express) {
   app.post("/api/auth/wallet-login", async (req, res) => {
     try {
       const { walletAddress, provider } = req.body;
-      
+
       if (!walletAddress || !provider) {
         return res.status(400).json({ message: "Wallet address and provider required" });
       }
 
       let user = await storage.getUserByWalletAddress?.(walletAddress);
-      
+
       if (!user) {
         // Create new user for this wallet
         const userData = {
@@ -398,7 +398,7 @@ export function setupAuth(app: Express) {
           walletAddress,
           authProvider: provider as 'metamask' | 'coinbase',
         };
-        
+
         user = await storage.createUser(userData);
       }
 
@@ -423,10 +423,20 @@ export function setupAuth(app: Express) {
           token 
         });
       });
-    } catch (error) {
-      console.error("Wallet login error:", error);
-      res.status(500).json({ message: "Internal server error" });
+    } catch (error: any) {
+    console.error('Wallet login error:', error.message || error);
+
+    if (error.message?.includes('certificate')) {
+      return res.status(503).json({ 
+        message: 'Service temporarily unavailable - SSL configuration needed' 
+      });
     }
+
+    return res.status(500).json({ 
+      message: 'Wallet authentication failed',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
   });
 
   // Google OAuth routes
@@ -453,7 +463,7 @@ export function setupAuth(app: Express) {
   app.post("/api/auth/forgot-password", async (req, res) => {
     try {
       const { email } = req.body;
-      
+
       if (!email) {
         return res.status(400).json({ message: "Email is required" });
       }
@@ -466,7 +476,7 @@ export function setupAuth(app: Express) {
 
       const resetToken = generatePasswordResetToken(email);
       const emailSent = await sendPasswordResetEmail(email, resetToken);
-      
+
       if (!emailSent) {
         return res.status(500).json({ message: "Failed to send reset email" });
       }
@@ -482,7 +492,7 @@ export function setupAuth(app: Express) {
   app.post("/api/auth/reset-password", async (req, res) => {
     try {
       const { token, newPassword } = req.body;
-      
+
       if (!token || !newPassword) {
         return res.status(400).json({ message: "Token and new password are required" });
       }
@@ -503,7 +513,7 @@ export function setupAuth(app: Express) {
 
       const hashedPassword = await hashPassword(newPassword);
       await storage.updateUser(user.id, { password: hashedPassword });
-      
+
       // Remove the used token
       passwordResetTokens.delete(token);
 
@@ -531,7 +541,7 @@ export function setupAuth(app: Express) {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-    
+
     const user = req.user as SelectUser;
     res.json({
       id: user.id,

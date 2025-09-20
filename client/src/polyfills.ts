@@ -11,41 +11,50 @@ if (typeof window !== 'undefined') {
     } 
   }
 
-  // Enhanced Web3 provider detection
+  // Enhanced Web3 provider detection with reduced logging
+  let hasLoggedProvider = false;
+  
   const checkWeb3Provider = () => {
     if (window.ethereum) {
-      if (window.ethereum.isMetaMask) {
-        console.log('MetaMask detected and ready');
-      } else if (window.ethereum.isCoinbaseWallet) {
-        console.log('Coinbase Wallet detected');
-      } else {
-        console.log('Generic Web3 provider detected');
+      if (!hasLoggedProvider) {
+        if (window.ethereum.isMetaMask) {
+          console.log('MetaMask detected and ready');
+        } else if (window.ethereum.isCoinbaseWallet) {
+          console.log('Coinbase Wallet detected');
+        } else {
+          console.log('Generic Web3 provider detected');
+        }
+        hasLoggedProvider = true;
       }
       return true;
     } else if (window.web3?.currentProvider) {
-      console.log('Legacy Web3 provider detected');
+      if (!hasLoggedProvider) {
+        console.log('Legacy Web3 provider detected');
+        hasLoggedProvider = true;
+      }
       return true;
     } else {
-      console.log('No Web3 provider detected - some features may be limited');
+      if (!hasLoggedProvider) {
+        console.log('No Web3 provider detected - install MetaMask for full functionality');
+        hasLoggedProvider = true;
+      }
       return false;
     }
   };
 
-  // Check immediately and set up listener for delayed provider injection
+  // Check immediately
   const hasProvider = checkWeb3Provider();
   
   if (!hasProvider) {
-    // Some wallets inject the provider asynchronously
-    let attempts = 0;
-    const maxAttempts = 10;
-    const checkInterval = setInterval(() => {
-      attempts++;
-      if (checkWeb3Provider() || attempts >= maxAttempts) {
-        clearInterval(checkInterval);
-      }
-    }, 100);
+    // Single retry after 2 seconds for delayed provider injection
+    setTimeout(() => {
+      checkWeb3Provider();
+    }, 2000);
   }
 
   // Listen for provider injection events
-  window.addEventListener('ethereum#initialized', checkWeb3Provider);
+  window.addEventListener('ethereum#initialized', () => {
+    hasLoggedProvider = false;
+    checkWeb3Provider();
+  });
 }
