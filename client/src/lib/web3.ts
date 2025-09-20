@@ -112,26 +112,28 @@ export class Web3Service {
     this.initializeServices();
   }
 
-  // Initialize production services
+  // Initialize production services - temporarily disabled for security update compatibility
   private async initializeServices() {
     try {
-      // Initialize Coinbase CDP SDK for production
-      if (import.meta.env.VITE_COINBASE_CDP_API_KEY) {
-        this.coinbase = new Coinbase({
-          apiKeyName: import.meta.env.VITE_COINBASE_CDP_API_KEY_NAME || "",
-          privateKey: import.meta.env.VITE_COINBASE_CDP_PRIVATE_KEY || ""
-        });
-      }
+      // Temporarily disabled to resolve SSL certificate issues after Circle SDK downgrade
+      console.warn("External Web3 services temporarily disabled for compatibility");
+      
+      // TODO: Re-enable after verifying API key configurations and SSL certificates
+      // if (import.meta.env.VITE_COINBASE_CDP_API_KEY) {
+      //   this.coinbase = new Coinbase({
+      //     apiKeyName: import.meta.env.VITE_COINBASE_CDP_API_KEY_NAME || "",
+      //     privateKey: import.meta.env.VITE_COINBASE_CDP_PRIVATE_KEY || ""
+      //   });
+      // }
 
-      // Initialize Circle SDK for USDC operations
-      if (import.meta.env.VITE_CIRCLE_API_KEY) {
-        this.circle = new Circle(
-          import.meta.env.VITE_CIRCLE_API_KEY,
-          import.meta.env.VITE_CIRCLE_ENVIRONMENT === "production" 
-            ? CircleEnvironments.production 
-            : CircleEnvironments.sandbox
-        );
-      }
+      // if (import.meta.env.VITE_CIRCLE_API_KEY) {
+      //   this.circle = new Circle(
+      //     import.meta.env.VITE_CIRCLE_API_KEY,
+      //     import.meta.env.VITE_CIRCLE_ENVIRONMENT === "production" 
+      //       ? CircleEnvironments.production 
+      //       : CircleEnvironments.sandbox
+      //   );
+      // }
     } catch (error) {
       console.warn("Web3 services initialization partial:", error);
     }
