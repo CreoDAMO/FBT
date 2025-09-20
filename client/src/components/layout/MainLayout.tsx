@@ -17,78 +17,72 @@ import Analytics from "@/pages/Analytics";
 import UserManagement from "@/pages/UserManagement";
 import InvestorDashboard from "@/pages/InvestorDashboard";
 import AIStudio from "@/pages/AIStudio";
-import Omniverse from "@/pages/Omniverse";
 
 const sections = {
   dashboard: { 
     component: Dashboard, 
-    title: "Dashboard", 
-    subtitle: "Platform overview and key metrics" 
+    title: "Dashboard Overview", 
+    subtitle: "Real-time platform metrics and insights" 
   },
   ordering: { 
     component: OrderSystem, 
     title: "Order System", 
-    subtitle: "Manage food orders and delivery tracking" 
+    subtitle: "Customer ordering interface and order tracking" 
   },
   driver: { 
     component: DriverPortal, 
     title: "Driver Portal", 
-    subtitle: "Driver management and route optimization" 
+    subtitle: "Delivery management and earnings tracking" 
   },
   merchant: { 
     component: MerchantHub, 
     title: "Merchant Hub", 
-    subtitle: "Restaurant and merchant management" 
+    subtitle: "Restaurant management and analytics" 
   },
   crowdfunding: { 
     component: Crowdfunding, 
-    title: "Crowdfunding", 
-    subtitle: "Investment opportunities and funding rounds" 
+    title: "Crowdfunding Portal", 
+    subtitle: "Investment opportunities and funding progress" 
   },
   tokenomics: { 
     component: Tokenomics, 
     title: "$FBT Tokenomics", 
-    subtitle: "FastBite Token ecosystem and staking" 
+    subtitle: "Token distribution, staking rewards, and DAO governance" 
   },
   admin: { 
     component: AdminPanel, 
     title: "Admin Panel", 
-    subtitle: "Platform administration and Web3 integrations" 
+    subtitle: "Platform administration and white-label management" 
   },
   contracts: { 
     component: SmartContracts, 
     title: "Smart Contracts", 
-    subtitle: "Blockchain contract deployment and management" 
+    subtitle: "Deploy and manage blockchain contracts" 
   },
   compliance: { 
     component: Compliance, 
-    title: "Compliance", 
-    subtitle: "Regulatory compliance and audit trails" 
+    title: "Compliance Dashboard", 
+    subtitle: "KYC/AML verification, audit logs, and regulatory compliance" 
   },
   analytics: { 
     component: Analytics, 
-    title: "Analytics", 
-    subtitle: "Business intelligence and performance metrics" 
+    title: "Analytics Dashboard", 
+    subtitle: "Cross-platform metrics and business intelligence" 
   },
   users: { 
     component: UserManagement, 
     title: "User Management", 
-    subtitle: "User roles, permissions, and account management" 
+    subtitle: "Authentication, profiles, and role-based access control" 
   },
   investor: { 
     component: InvestorDashboard, 
     title: "Investor Dashboard", 
-    subtitle: "Investment tracking and portfolio management" 
+    subtitle: "White label business metrics and client management" 
   },
   "ai-studio": { 
     component: AIStudio, 
     title: "AI Studio", 
     subtitle: "Advanced AI capabilities with multiple providers" 
-  },
-  omniverse: { 
-    component: Omniverse, 
-    title: "Omniverse", 
-    subtitle: "Immersive virtual experiences and metaverse integration" 
   },
 };
 
@@ -123,14 +117,14 @@ export default function MainLayout() {
           onSectionChange={(section: string) => setCurrentSection(section as SectionKey)}
           onClose={() => setSidebarOpen(false)}
         />
-
+        
         <div className="flex-1 flex flex-col overflow-hidden">
           <TopHeader 
             title={title}
             subtitle={subtitle}
             onToggleSidebar={toggleSidebar}
           />
-
+          
           <main className="flex-1 overflow-auto bg-gray-50">
             <CurrentComponent />
           </main>
