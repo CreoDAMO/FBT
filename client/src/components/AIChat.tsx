@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,8 +20,6 @@ import {
   VolumeX,
   Volume2
 } from 'lucide-react';
-
-// Removed buffer import - using built-in TextEncoder/TextDecoder instead
 
 interface Message {
   id: string;
@@ -76,7 +75,7 @@ export default function AIChat() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [temperature, setTemperature] = useState(0.7);
   const [maxTokens, setMaxTokens] = useState(2000);
-
+  
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -132,7 +131,7 @@ export default function AIChat() {
       }
 
       const data = await response.json();
-
+      
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -144,17 +143,17 @@ export default function AIChat() {
       };
 
       setMessages(prev => [...prev, aiMessage]);
-
+      
     } catch (error) {
       console.error('Error sending message:', error);
-
+      
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: 'Sorry, I encountered an error. Please make sure the API keys are configured in the environment variables.',
         timestamp: new Date()
       };
-
+      
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
@@ -175,9 +174,8 @@ export default function AIChat() {
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
         const arrayBuffer = await audioBlob.arrayBuffer();
-        const uint8Array = new Uint8Array(arrayBuffer);
-        const base64Audio = btoa(String.fromCharCode(...uint8Array));
-
+        const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+        
         // Send to voice transcription endpoint
         try {
           const response = await fetch('/api/ai/voice/transcribe', {
@@ -190,20 +188,20 @@ export default function AIChat() {
               provider: selectedProvider
             }),
           });
-
+          
           const data = await response.json();
           setInputValue(data.text || '');
         } catch (error) {
           console.error('Voice transcription error:', error);
         }
-
+        
         stream.getTracks().forEach(track => track.stop());
       };
 
       mediaRecorderRef.current = mediaRecorder;
       mediaRecorder.start();
       setIsRecording(true);
-
+      
     } catch (error) {
       console.error('Error starting voice recording:', error);
     }
@@ -257,7 +255,7 @@ export default function AIChat() {
                 </div>
               </div>
             </CardHeader>
-
+            
             <CardContent className="flex-1 flex flex-col">
               <ScrollArea className="flex-1 pr-4" ref={scrollAreaRef}>
                 <div className="space-y-4">
@@ -267,7 +265,7 @@ export default function AIChat() {
                       <p>Start a conversation with AI</p>
                     </div>
                   )}
-
+                  
                   {messages.map((message) => (
                     <div
                       key={message.id}
@@ -292,9 +290,9 @@ export default function AIChat() {
                             {message.timestamp.toLocaleTimeString()}
                           </span>
                         </div>
-
+                        
                         <p className="whitespace-pre-wrap">{message.content}</p>
-
+                        
                         {message.provider && (
                           <div className="flex items-center gap-2 mt-2 text-xs opacity-75">
                             <Badge variant="secondary" className="text-xs">
@@ -308,7 +306,7 @@ export default function AIChat() {
                       </div>
                     </div>
                   ))}
-
+                  
                   {isLoading && (
                     <div className="flex justify-start">
                       <div className="bg-gray-100 rounded-lg p-3">
@@ -343,7 +341,7 @@ export default function AIChat() {
                     disabled={isLoading}
                   />
                 </div>
-
+                
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -351,7 +349,7 @@ export default function AIChat() {
                   accept="image/*"
                   className="hidden"
                 />
-
+                
                 <Button
                   variant="outline"
                   size="icon"
@@ -360,7 +358,7 @@ export default function AIChat() {
                 >
                   <Upload className="h-4 w-4" />
                 </Button>
-
+                
                 <Button
                   variant="outline"
                   size="icon"
@@ -370,7 +368,7 @@ export default function AIChat() {
                 >
                   {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
                 </Button>
-
+                
                 <Button 
                   onClick={sendMessage} 
                   disabled={isLoading || (!inputValue.trim() && !uploadedImage)}

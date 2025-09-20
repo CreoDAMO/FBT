@@ -3,7 +3,6 @@ import { Strategy as LocalStrategy } from "passport-local";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Strategy as FacebookStrategy } from "passport-facebook";
 import { Express } from "express";
-import rateLimit from "express-rate-limit";
 import session from "express-session";
 import MemoryStore from "memorystore";
 import bcrypt from "bcryptjs";
@@ -123,13 +122,6 @@ export async function sendPasswordResetEmail(email: string, resetToken: string):
 }
 
 export function setupAuth(app: Express) {
-  // Rate limiter for auth endpoints (100 requests / 15 min per IP)
-  const authRateLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-    standardHeaders: true,
-    legacyHeaders: false,
-  });
   const MemoryStoreSession = MemoryStore(session);
   
   const sessionSettings: session.SessionOptions = {
@@ -334,12 +326,7 @@ export function setupAuth(app: Express) {
   });
 
   // Registration
-  const registerLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // limit each IP to 5 registration attempts per windowMs
-    message: { message: "Too many registration attempts, please try again later." },
-  });
-  app.post("/api/auth/register", registerLimiter, async (req, res) => {
+  app.post("/api/auth/register", async (req, res) => {
     try {
       const userData = insertUserSchema.parse(req.body);
       
@@ -391,12 +378,7 @@ export function setupAuth(app: Express) {
   });
 
   // Web3 wallet login
-  const walletLoginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 10, // limit each IP to 10 requests per windowMs
-    message: { message: "Too many wallet login attempts, please try again later." },
-  });
-  app.post("/api/auth/wallet-login", walletLoginLimiter, async (req, res) => {
+  app.post("/api/auth/wallet-login", async (req, res) => {
     try {
       const { walletAddress, provider } = req.body;
       
@@ -545,7 +527,7 @@ export function setupAuth(app: Express) {
   });
 
   // Get current user
-  app.get("/api/auth/user", authRateLimiter, (req, res) => {
+  app.get("/api/auth/user", (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "Not authenticated" });
     }

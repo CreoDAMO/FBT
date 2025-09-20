@@ -2,27 +2,6 @@ import { ethers } from "ethers";
 import { Coinbase, Wallet as CoinbaseWallet } from "@coinbase/coinbase-sdk";
 import { Circle, CircleEnvironments } from "@circle-fin/circle-sdk";
 import { nanoid } from "nanoid";
-// Polyfill Buffer for browser environment
-let Buffer: any;
-if (typeof window !== 'undefined' && typeof (window as any).Buffer === 'undefined') {
-  try {
-    import('buffer').then(bufferModule => {
-      (window as any).Buffer = bufferModule.Buffer;
-      Buffer = bufferModule.Buffer;
-    }).catch(e => {
-      console.warn('Buffer polyfill not available:', e);
-    });
-  } catch (e) {
-    console.warn('Buffer polyfill not available:', e);
-  }
-}
-
-// OpenZeppelin SDK imports for enhanced security and governance
-declare global {
-  interface Window {
-    Buffer?: any;
-  }
-}
 
 // Enhanced interfaces for production features
 export interface PaymentIntent {
@@ -587,26 +566,7 @@ export class Web3Service {
 // Create singleton instance
 export const web3Service = new Web3Service();
 
-// OpenZeppelin Enhanced Contract Features
-export const OPENZEPPELIN_FEATURES = {
-  GOVERNANCE: {
-    GOVERNOR: '@openzeppelin/contracts/governance/Governor.sol',
-    TIMELOCK: '@openzeppelin/contracts/governance/TimelockController.sol',
-    VOTES: '@openzeppelin/contracts/governance/utils/Votes.sol'
-  },
-  SECURITY: {
-    PAUSABLE: '@openzeppelin/contracts/security/Pausable.sol',
-    REENTRANCY_GUARD: '@openzeppelin/contracts/security/ReentrancyGuard.sol',
-    ACCESS_CONTROL: '@openzeppelin/contracts/access/AccessControl.sol'
-  },
-  TOKENS: {
-    ERC20_UPGRADEABLE: '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol',
-    ERC721_UPGRADEABLE: '@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol',
-    ERC1155_UPGRADEABLE: '@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol'
-  }
-};
-
-// Contract ABIs for FastBite Pro smart contracts with OpenZeppelin compatibility
+// Contract ABIs for FastBite Pro smart contracts
 export const CONTRACT_ABIS = {
   ERC20: [
     "function name() view returns (string)",
@@ -625,51 +585,14 @@ export const CONTRACT_ABIS = {
   DAO_GOVERNOR: [
     "function propose(address[], uint256[], bytes[], string) returns (uint256)",
     "function castVote(uint256, uint8) returns (uint256)",
-    "function castVoteWithReason(uint256, uint8, string) returns (uint256)",
-    "function castVoteBySig(uint256, uint8, uint8, bytes32, bytes32) returns (uint256)",
     "function execute(address[], uint256[], bytes[], bytes32) returns (uint256)",
-    "function cancel(address[], uint256[], bytes[], bytes32) returns (uint256)",
     "function getVotes(address, uint256) view returns (uint256)",
-    "function getPastVotes(address, uint256) view returns (uint256)",
     "function state(uint256) view returns (uint8)",
     "function proposalThreshold() view returns (uint256)",
     "function votingDelay() view returns (uint256)",
     "function votingPeriod() view returns (uint256)",
-    "function quorum(uint256) view returns (uint256)",
-    "function hasVoted(uint256, address) view returns (bool)",
-    "function proposalProposer(uint256) view returns (address)",
-    "function proposalEta(uint256) view returns (uint256)",
-    "function timelock() view returns (address)",
-    "function token() view returns (address)",
     "event ProposalCreated(uint256, address, address[], uint256[], string[], bytes[], uint256, uint256, string)",
-    "event VoteCast(address indexed, uint256, uint8, uint256, string)",
-    "event ProposalCanceled(uint256)",
-    "event ProposalExecuted(uint256)",
-    "event ProposalQueued(uint256, uint256)"
-  ],
-
-  TIMELOCK_CONTROLLER: [
-    "function schedule(address, uint256, bytes, bytes32, bytes32, uint256)",
-    "function scheduleBatch(address[], uint256[], bytes[], bytes32, bytes32, uint256)",
-    "function execute(address, uint256, bytes, bytes32, bytes32)",
-    "function executeBatch(address[], uint256[], bytes[], bytes32, bytes32)",
-    "function cancel(bytes32)",
-    "function getMinDelay() view returns (uint256)",
-    "function isOperation(bytes32) view returns (bool)",
-    "function isOperationPending(bytes32) view returns (bool)",
-    "function isOperationReady(bytes32) view returns (bool)",
-    "function isOperationDone(bytes32) view returns (bool)",
-    "function getTimestamp(bytes32) view returns (uint256)",
-    "function hasRole(bytes32, address) view returns (bool)",
-    "function getRoleAdmin(bytes32) view returns (bytes32)",
-    "function grantRole(bytes32, address)",
-    "function revokeRole(bytes32, address)",
-    "function renounceRole(bytes32, address)",
-    "event CallScheduled(bytes32 indexed, uint256 indexed, address, uint256, bytes, bytes32, uint256)",
-    "event CallExecuted(bytes32 indexed, uint256 indexed, address, uint256, bytes)",
-    "event CallSalt(bytes32 indexed, bytes32)",
-    "event Cancelled(bytes32 indexed)",
-    "event MinDelayChange(uint256, uint256)"
+    "event VoteCast(address indexed, uint256, uint8, uint256, string)"
   ],
 
   ESCROW: [
