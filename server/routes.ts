@@ -75,7 +75,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { customerId, restaurantId, driverId } = req.query;
       let orders = [];
-      
+
       if (customerId) {
         orders = await storage.getOrdersByCustomer(parseInt(customerId as string));
       } else if (restaurantId) {
@@ -85,7 +85,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         orders = await storage.getActiveOrders();
       }
-      
+
       res.json(orders);
     } catch (error) {
       console.error("Orders fetch error:", error);
@@ -335,12 +335,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   wss.on('connection', (ws) => {
     console.log('WebSocket client connected');
-    
+
     ws.on('message', (message) => {
       try {
         const data = JSON.parse(message.toString());
         console.log('Received WebSocket message:', data);
-        
+
         // Handle different message types
         switch (data.type) {
           case 'subscribe':

@@ -1,15 +1,25 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Mic, MicOff, Send, Bot, User, Image, Volume2, VolumeX, Zap, Brain } from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
+import { 
+  Send, 
+  Mic, 
+  MicOff, 
+  Image, 
+  Settings, 
+  Bot, 
+  User,
+  Loader2,
+  Upload,
+  VolumeX,
+  Volume2
+} from 'lucide-react';
 
 interface Message {
   id: string;
@@ -18,477 +28,459 @@ interface Message {
   provider?: string;
   model?: string;
   timestamp: Date;
+  tokens?: number;
 }
 
 interface AIProvider {
+  id: string;
   name: string;
-  isHealthy: boolean;
+  models: string[];
   capabilities: string[];
 }
 
-const PROVIDER_ICONS = {
-  openai: '🤖',
-  anthropic: '🧠',
-  xai: '⚡',
-  deepseek: '🔍'
-};
-
-const PROVIDER_COLORS = {
-  openai: 'bg-green-500',
-  anthropic: 'bg-orange-500',
-  xai: 'bg-purple-500',
-  deepseek: 'bg-red-500'
-};
+const AI_PROVIDERS: AIProvider[] = [
+  {
+    id: 'openai',
+    name: 'OpenAI',
+    models: ['gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo'],
+    capabilities: ['chat', 'image', 'voice', 'tts']
+  },
+  {
+    id: 'anthropic',
+    name: 'Anthropic Claude',
+    models: ['claude-sonnet-4-20250514', 'claude-3-7-sonnet-20250219'],
+    capabilities: ['chat', 'image', 'sentiment', 'summarization']
+  },
+  {
+    id: 'xai',
+    name: 'xAI Grok',
+    models: ['grok-2-1212', 'grok-2-vision-1212'],
+    capabilities: ['chat', 'image', 'realtime', 'code-generation', 'witty']
+  },
+  {
+    id: 'deepseek',
+    name: 'DeepSeek',
+    models: ['deepseek-chat', 'deepseek-reasoner'],
+    capabilities: ['chat', 'reasoning', 'math', 'code-review']
+  }
+];
 
 export default function AIChat() {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputMessage, setInputMessage] = useState('');
-  const [selectedProvider, setSelectedProvider] = useState<string>('openai');
-  const [selectedModel, setSelectedModel] = useState<string>('');
+  const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState('openai');
+  const [selectedModel, setSelectedModel] = useState('gpt-4o');
   const [isRecording, setIsRecording] = useState(false);
-  const [sessionId, setSessionId] = useState<string>('');
-  const [providers, setProviders] = useState<AIProvider[]>([]);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>('');
-  const [isVoiceEnabled, setIsVoiceEnabled] = useState(false);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [temperature, setTemperature] = useState(0.7);
+  const [maxTokens, setMaxTokens] = useState(2000);
   
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const currentProvider = AI_PROVIDERS.find(p => p.id === selectedProvider);
+  const availableModels = currentProvider?.models || [];
 
   useEffect(() => {
-    scrollToBottom();
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    }
   }, [messages]);
 
   useEffect(() => {
-    loadProviders();
-  }, []);
-
-  const loadProviders = async () => {
-    try {
-      const response = await apiRequest('/api/ai/providers');
-      setProviders(response);
-      if (response.length > 0) {
-        setSelectedProvider(response[0].name.toLowerCase());
-      }
-    } catch (error) {
-      console.error('Failed to load providers:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load AI providers',
-        variant: 'destructive'
-      });
+    // Update model when provider changes
+    if (currentProvider && !availableModels.includes(selectedModel)) {
+      setSelectedModel(availableModels[0] || '');
     }
-  };
+  }, [selectedProvider, availableModels, selectedModel, currentProvider]);
 
   const sendMessage = async () => {
-    if (!inputMessage.trim() && !imageFile) return;
-    
+    if (!inputValue.trim() && !uploadedImage) return;
+
     const newMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: inputMessage,
+      content: inputValue,
       timestamp: new Date()
     };
 
     setMessages(prev => [...prev, newMessage]);
-    setInputMessage('');
+    setInputValue('');
     setIsLoading(true);
 
     try {
-      let response;
+      const response = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: inputValue }],
+          provider: selectedProvider,
+          model: selectedModel,
+          imageData: uploadedImage,
+          temperature,
+          maxTokens
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get AI response');
+      }
+
+      const data = await response.json();
       
-      if (imageFile) {
-        // Image analysis
-        const base64Image = await fileToBase64(imageFile);
-        response = await apiRequest('/api/ai/image/analyze', {
-          method: 'POST',
-          body: JSON.stringify({
-            imageData: base64Image,
-            prompt: inputMessage || 'Describe what you see in this image.',
-            provider: selectedProvider,
-            model: selectedModel
-          }),
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
-        setImageFile(null);
-        setImagePreview('');
-      } else {
-        // Text chat
-        response = await apiRequest('/api/ai/chat', {
-          method: 'POST',
-          body: JSON.stringify({
-            message: inputMessage,
-            provider: selectedProvider,
-            model: selectedModel,
-            sessionId: sessionId || undefined,
-            isVoiceEnabled
-          }),
-          headers: { 'Content-Type': 'application/json' }
-        });
-      }
-
-      if (response.sessionId && !sessionId) {
-        setSessionId(response.sessionId);
-      }
-
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: imageFile ? response.analysis : response.response,
-        provider: response.provider,
-        model: response.model,
+        content: data.content,
+        provider: data.provider,
+        model: data.model,
+        tokens: data.tokens,
         timestamp: new Date()
       };
 
       setMessages(prev => [...prev, aiMessage]);
-
-      // Text-to-speech if voice is enabled
-      if (isVoiceEnabled && response.response) {
-        await playAudioResponse(response.response);
-      }
+      
     } catch (error) {
-      console.error('Chat error:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to get AI response',
-        variant: 'destructive'
-      });
+      console.error('Error sending message:', error);
+      
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: 'Sorry, I encountered an error. Please make sure the API keys are configured in the environment variables.',
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
+      setUploadedImage(null);
     }
   };
 
-  const playAudioResponse = async (text: string) => {
+  const startVoiceRecording = async () => {
     try {
-      const response = await apiRequest('/api/ai/voice/synthesize', {
-        method: 'POST',
-        body: JSON.stringify({
-          text,
-          provider: selectedProvider,
-          voice: 'alloy'
-        }),
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      const audioChunks: Blob[] = [];
 
-      const audioBlob = new Blob([
-        Uint8Array.from(atob(response.audioData), c => c.charCodeAt(0))
-      ], { type: 'audio/mpeg' });
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunks.push(event.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+        const arrayBuffer = await audioBlob.arrayBuffer();
+        const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+        
+        // Send to voice transcription endpoint
+        try {
+          const response = await fetch('/api/ai/voice/transcribe', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              audioData: base64Audio,
+              provider: selectedProvider
+            }),
+          });
+          
+          const data = await response.json();
+          setInputValue(data.text || '');
+        } catch (error) {
+          console.error('Voice transcription error:', error);
+        }
+        
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start();
+      setIsRecording(true);
       
-      const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
-      audio.play();
     } catch (error) {
-      console.error('Text-to-speech error:', error);
+      console.error('Error starting voice recording:', error);
     }
   };
 
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        const base64 = reader.result?.toString().split(',')[1];
-        resolve(base64 || '');
-      };
-      reader.onerror = reject;
-    });
+  const stopVoiceRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setImageFile(file);
       const reader = new FileReader();
       reader.onload = (e) => {
-        setImagePreview(e.target?.result as string);
+        const base64 = e.target?.result as string;
+        setUploadedImage(base64.split(',')[1]); // Remove data:image/... prefix
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      setIsRecording(true);
-      // Implementation for recording would go here
-      toast({
-        title: 'Recording Started',
-        description: 'Voice recording feature is being developed'
-      });
-    } catch (error) {
-      console.error('Recording error:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to start recording',
-        variant: 'destructive'
-      });
-    }
-  };
-
-  const stopRecording = () => {
-    setIsRecording(false);
-    // Implementation for stopping recording would go here
-  };
-
-  const compareProviders = async () => {
-    if (!inputMessage.trim()) return;
-
-    setIsLoading(true);
-    try {
-      const response = await apiRequest('/api/ai/compare', {
-        method: 'POST',
-        body: JSON.stringify({
-          message: inputMessage,
-          providers: providers.filter(p => p.isHealthy).map(p => p.name.toLowerCase())
-        }),
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      // Display comparison results
-      const comparisonMessage: Message = {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content: `**Multi-Provider Comparison:**\n\n${response.responses.map((r: any, index: number) => 
-          `**${r.provider.toUpperCase()}:** ${r.response.content}`
-        ).join('\n\n')}\n\n**Fastest:** ${response.fastest.toUpperCase()}`,
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, comparisonMessage]);
-      setInputMessage('');
-    } catch (error) {
-      console.error('Comparison error:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to compare providers',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const getProviderModels = (provider: string) => {
-    const modelOptions = {
-      openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo'],
-      anthropic: ['claude-sonnet-4-20250514', 'claude-3-7-sonnet-20250219'],
-      xai: ['grok-2-1212', 'grok-2-vision-1212'],
-      deepseek: ['deepseek-chat', 'deepseek-reasoner']
-    };
-    return modelOptions[provider as keyof typeof modelOptions] || [];
+  const clearChat = () => {
+    setMessages([]);
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <Card className="h-[600px] flex flex-col">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2">
-            <Bot className="w-5 h-5" />
-            AI Chat Studio
-          </CardTitle>
-          
-          <div className="flex gap-4 flex-wrap">
-            <Select value={selectedProvider} onValueChange={setSelectedProvider}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Select Provider" />
-              </SelectTrigger>
-              <SelectContent>
-                {providers.map(provider => (
-                  <SelectItem key={provider.name} value={provider.name.toLowerCase()}>
-                    <div className="flex items-center gap-2">
-                      <span>{PROVIDER_ICONS[provider.name.toLowerCase() as keyof typeof PROVIDER_ICONS]}</span>
-                      <span>{provider.name}</span>
-                      {provider.isHealthy && (
-                        <div className={`w-2 h-2 rounded-full ${PROVIDER_COLORS[provider.name.toLowerCase() as keyof typeof PROVIDER_COLORS]}`} />
-                      )}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+    <div className="flex flex-col h-full">
+      <Tabs defaultValue="chat" className="flex-1 flex flex-col">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="chat">Chat</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsTrigger value="providers">Providers</TabsTrigger>
+        </TabsList>
 
-            <Select value={selectedModel} onValueChange={setSelectedModel}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Select Model" />
-              </SelectTrigger>
-              <SelectContent>
-                {getProviderModels(selectedProvider).map(model => (
-                  <SelectItem key={model} value={model}>
-                    {model}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Button
-              variant={isVoiceEnabled ? "default" : "outline"}
-              size="sm"
-              onClick={() => setIsVoiceEnabled(!isVoiceEnabled)}
-            >
-              {isVoiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-              Voice
-            </Button>
-          </div>
-        </CardHeader>
-
-        <CardContent className="flex-1 flex flex-col">
-          <ScrollArea className="flex-1 mb-4 p-4 border rounded-md">
-            <div className="space-y-4">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`max-w-[70%] p-3 rounded-lg ${
-                      message.role === 'user'
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-100 text-gray-900'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      {message.role === 'user' ? (
-                        <User className="w-4 h-4" />
-                      ) : (
-                        <Bot className="w-4 h-4" />
-                      )}
-                      <span className="text-sm font-medium">
-                        {message.role === 'user' ? 'You' : message.provider?.toUpperCase()}
-                      </span>
-                      {message.model && (
-                        <Badge variant="secondary" className="text-xs">
-                          {message.model}
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="whitespace-pre-wrap">{message.content}</div>
-                  </div>
+        <TabsContent value="chat" className="flex-1 flex flex-col">
+          <Card className="flex-1 flex flex-col">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Bot className="h-5 w-5" />
+                  AI Chat - {currentProvider?.name}
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">{selectedModel}</Badge>
+                  <Button variant="outline" size="sm" onClick={clearChat}>
+                    Clear
+                  </Button>
                 </div>
-              ))}
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-gray-100 p-3 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                      <span>AI is thinking...</span>
+              </div>
+            </CardHeader>
+            
+            <CardContent className="flex-1 flex flex-col">
+              <ScrollArea className="flex-1 pr-4" ref={scrollAreaRef}>
+                <div className="space-y-4">
+                  {messages.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>Start a conversation with AI</p>
                     </div>
-                  </div>
+                  )}
+                  
+                  {messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`flex gap-3 ${
+                        message.role === 'user' ? 'justify-end' : 'justify-start'
+                      }`}
+                    >
+                      <div
+                        className={`max-w-[80%] rounded-lg p-3 ${
+                          message.role === 'user'
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-gray-100 text-gray-900'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          {message.role === 'user' ? (
+                            <User className="h-4 w-4" />
+                          ) : (
+                            <Bot className="h-4 w-4" />
+                          )}
+                          <span className="text-xs opacity-75">
+                            {message.timestamp.toLocaleTimeString()}
+                          </span>
+                        </div>
+                        
+                        <p className="whitespace-pre-wrap">{message.content}</p>
+                        
+                        {message.provider && (
+                          <div className="flex items-center gap-2 mt-2 text-xs opacity-75">
+                            <Badge variant="secondary" className="text-xs">
+                              {message.provider}
+                            </Badge>
+                            {message.tokens && (
+                              <span>{message.tokens} tokens</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {isLoading && (
+                    <div className="flex justify-start">
+                      <div className="bg-gray-100 rounded-lg p-3">
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span className="text-sm">AI is thinking...</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+
+              {uploadedImage && (
+                <div className="mt-4 p-2 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-2">Image attached</p>
+                  <img 
+                    src={`data:image/jpeg;base64,${uploadedImage}`} 
+                    alt="Uploaded" 
+                    className="max-h-32 rounded"
+                  />
                 </div>
               )}
-              <div ref={messagesEndRef} />
-            </div>
-          </ScrollArea>
 
-          {imagePreview && (
-            <div className="mb-4 p-2 border rounded-md">
-              <img 
-                src={imagePreview} 
-                alt="Preview" 
-                className="max-h-32 rounded"
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setImageFile(null);
-                  setImagePreview('');
-                }}
-              >
-                Remove
-              </Button>
-            </div>
-          )}
-
-          <Tabs defaultValue="chat" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="chat">Chat</TabsTrigger>
-              <TabsTrigger value="voice">Voice</TabsTrigger>
-              <TabsTrigger value="compare">Compare</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="chat" className="space-y-4">
-              <div className="flex gap-2">
-                <Textarea
-                  placeholder="Type your message..."
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      sendMessage();
-                    }
-                  }}
-                  className="flex-1"
-                  rows={3}
-                />
-                <div className="flex flex-col gap-2">
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleImageUpload}
-                    accept="image/*"
-                    className="hidden"
+              <div className="flex gap-2 mt-4">
+                <div className="flex-1 relative">
+                  <Input
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    placeholder="Type your message..."
+                    onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+                    disabled={isLoading}
                   />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Image className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    onClick={sendMessage}
-                    disabled={isLoading || (!inputMessage.trim() && !imageFile)}
-                  >
-                    <Send className="w-4 h-4" />
-                  </Button>
                 </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="voice" className="space-y-4">
-              <div className="flex items-center justify-center gap-4">
+                
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageUpload}
+                  accept="image/*"
+                  className="hidden"
+                />
+                
                 <Button
-                  variant={isRecording ? "destructive" : "default"}
-                  size="lg"
-                  onClick={isRecording ? stopRecording : startRecording}
+                  variant="outline"
+                  size="icon"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isLoading || !currentProvider?.capabilities.includes('image')}
                 >
-                  {isRecording ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
-                  {isRecording ? 'Stop Recording' : 'Start Recording'}
+                  <Upload className="h-4 w-4" />
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={isRecording ? stopVoiceRecording : startVoiceRecording}
+                  disabled={isLoading || !currentProvider?.capabilities.includes('voice')}
+                  className={isRecording ? 'bg-red-100' : ''}
+                >
+                  {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                </Button>
+                
+                <Button 
+                  onClick={sendMessage} 
+                  disabled={isLoading || (!inputValue.trim() && !uploadedImage)}
+                >
+                  <Send className="h-4 w-4" />
                 </Button>
               </div>
-              <p className="text-center text-sm text-gray-500">
-                Voice features are in development. Click the microphone to start recording.
-              </p>
-            </TabsContent>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            <TabsContent value="compare" className="space-y-4">
-              <Textarea
-                placeholder="Enter a message to compare across all AI providers..."
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                className="w-full"
-                rows={3}
-              />
-              <Button
-                onClick={compareProviders}
-                disabled={isLoading || !inputMessage.trim()}
-                className="w-full"
-              >
-                <Brain className="w-4 h-4 mr-2" />
-                Compare All Providers
-              </Button>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+        <TabsContent value="settings" className="flex-1">
+          <Card>
+            <CardHeader>
+              <CardTitle>AI Settings</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Provider</label>
+                <Select value={selectedProvider} onValueChange={setSelectedProvider}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {AI_PROVIDERS.map((provider) => (
+                      <SelectItem key={provider.id} value={provider.id}>
+                        {provider.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Model</label>
+                <Select value={selectedModel} onValueChange={setSelectedModel}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableModels.map((model) => (
+                      <SelectItem key={model} value={model}>
+                        {model}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Temperature: {temperature}</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="2"
+                  step="0.1"
+                  value={temperature}
+                  onChange={(e) => setTemperature(parseFloat(e.target.value))}
+                  className="w-full"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Max Tokens: {maxTokens}</label>
+                <input
+                  type="range"
+                  min="100"
+                  max="4000"
+                  step="100"
+                  value={maxTokens}
+                  onChange={(e) => setMaxTokens(parseInt(e.target.value))}
+                  className="w-full"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="providers" className="flex-1">
+          <div className="grid gap-4">
+            {AI_PROVIDERS.map((provider) => (
+              <Card key={provider.id}>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    {provider.name}
+                    <Badge variant={selectedProvider === provider.id ? "default" : "secondary"}>
+                      {selectedProvider === provider.id ? "Active" : "Available"}
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div>
+                      <strong>Models:</strong> {provider.models.join(", ")}
+                    </div>
+                    <div>
+                      <strong>Capabilities:</strong>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {provider.capabilities.map((cap) => (
+                          <Badge key={cap} variant="outline" className="text-xs">
+                            {cap}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

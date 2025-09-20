@@ -1,9 +1,10 @@
+
 import { AIProvider, AIMessage, AIResponse, VoiceMessage } from '../../shared/ai-providers';
 
 export abstract class BaseAIProvider {
+  protected provider: AIProvider;
   protected apiKey: string;
   protected baseUrl?: string;
-  protected provider: AIProvider;
 
   constructor(provider: AIProvider, apiKey: string, baseUrl?: string) {
     this.provider = provider;
@@ -11,19 +12,14 @@ export abstract class BaseAIProvider {
     this.baseUrl = baseUrl;
   }
 
-  // Abstract methods that each provider must implement
+  // Abstract methods that must be implemented by subclasses
   abstract chat(messages: AIMessage[], model?: string): Promise<AIResponse>;
   abstract streamChat(messages: AIMessage[], model?: string): AsyncGenerator<string, void, unknown>;
   abstract analyzeImage(imageData: string, prompt: string, model?: string): Promise<AIResponse>;
   abstract transcribeAudio(audioData: ArrayBuffer, format?: string): Promise<VoiceMessage>;
   abstract generateSpeech(text: string, voice?: string): Promise<ArrayBuffer>;
 
-  // Common utility methods
-  protected calculateTokens(text: string): number {
-    // Rough token estimation (4 chars = 1 token)
-    return Math.ceil(text.length / 4);
-  }
-
+  // Helper methods
   protected formatMessages(messages: AIMessage[]): any[] {
     return messages.map(msg => ({
       role: msg.role,
@@ -31,16 +27,22 @@ export abstract class BaseAIProvider {
     }));
   }
 
+  protected calculateTokens(text: string): number {
+    // Rough estimation: 1 token ≈ 4 characters
+    return Math.ceil(text.length / 4);
+  }
+
   protected createResponse(content: string, model: string, inputTokens: number, outputTokens: number): AIResponse {
     return {
       content,
       provider: this.provider,
       model,
+      timestamp: new Date(),
       tokens: {
         input: inputTokens,
-        output: outputTokens
-      },
-      timestamp: new Date()
+        output: outputTokens,
+        total: inputTokens + outputTokens
+      }
     };
   }
 
