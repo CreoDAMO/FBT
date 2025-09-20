@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import rateLimit from "express-rate-limit";
 import { WebSocketServer } from "ws";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
@@ -10,6 +11,14 @@ import { aiRoutes } from "./ai/routes";
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup comprehensive authentication system
   const authenticateJWT = setupAuth(app);
+
+  // Rate limiter for AI routes
+  const aiRateLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
 
   // Dashboard metrics
   app.get("/api/dashboard/metrics", async (req, res) => {
@@ -327,7 +336,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI routes - protected with JWT authentication
-  app.use("/api/ai", authenticateJWT, aiRoutes);
+  app.use("/api/ai", aiRateLimiter, authenticateJWT, aiRoutes);
 
   // WebSocket server for real-time updates
   const httpServer = createServer(app);
