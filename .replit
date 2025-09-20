@@ -1,15 +1,15 @@
-modules = ["nodejs-20", "web", "python-3.11"]
+modules = ["nodejs-20", "python-3.11", "web"]
 run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
-channel = "stable-24_05"
+channel = "stable-25_05"
 packages = ["freetype", "lcms2", "libGL", "libGLU", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "tcl", "tk", "zlib"]
 
 [deployment]
 deploymentTarget = "autoscale"
 build = ["npm", "run", "build"]
-run = ["npm", "run", "start"]
+run = ["streamlit", "run", "app.py", "--server.port", "5000"]
 
 [[ports]]
 localPort = 5000
