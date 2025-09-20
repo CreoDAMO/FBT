@@ -78,7 +78,7 @@ export default function Sidebar({ isOpen, currentSection, onSectionChange, onClo
       
       <div className={`bg-white shadow-lg transition-all duration-300 ease-in-out ${
         isOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full md:w-0 md:translate-x-0'
-      } min-h-screen overflow-hidden fixed md:relative z-50 md:z-auto`}>
+      } h-screen overflow-y-auto fixed md:relative z-50 md:z-auto flex flex-col sidebar-scroll`}>
       {/* Logo Header */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center space-x-3">
@@ -93,7 +93,7 @@ export default function Sidebar({ isOpen, currentSection, onSectionChange, onClo
       </div>
 
       {/* Navigation Menu */}
-      <nav className="p-4 space-y-2">
+      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         {navigationSections.map((section) => (
           <div key={section.title} className="sidebar-section">
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
@@ -125,7 +125,7 @@ export default function Sidebar({ isOpen, currentSection, onSectionChange, onClo
       </nav>
 
       {/* User Profile */}
-      <div className="absolute bottom-4 left-4 right-4">
+      <div className="mt-auto p-4 border-t border-gray-200">
         <div className="bg-gray-100 rounded-lg p-3 flex items-center space-x-3">
           <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
             <Users className="w-5 h-5 text-gray-600" />
