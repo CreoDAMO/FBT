@@ -73,6 +73,61 @@
   .fastbite-gradient {
     background: linear-gradient(135deg, hsl(var(--fastbite-blue-500)), hsl(var(--fastbite-orange-500)));
   }
+
+  /* Mobile-optimized touch targets */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Mobile-friendly tables */
+  .mobile-table {
+    @apply block md:table;
+  }
+
+  .mobile-table thead,
+  .mobile-table tbody,
+  .mobile-table th,
+  .mobile-table td,
+  .mobile-table tr {
+    @apply block md:table-row md:table-cell;
+  }
+
+  .mobile-table thead tr {
+    @apply absolute -top-full -left-full md:relative md:top-auto md:left-auto;
+  }
+
+  .mobile-table tr {
+    @apply border border-gray-200 mb-4 p-4 rounded-lg md:border-0 md:mb-0 md:p-0 md:rounded-none;
+  }
+
+  .mobile-table td {
+    @apply border-0 md:border-t md:border-gray-200 relative pl-12 md:pl-4 text-left;
+  }
+
+  .mobile-table td:before {
+    content: attr(data-label);
+    @apply absolute left-0 top-0 w-10 font-semibold text-sm text-gray-600 md:hidden;
+  }
+
+  /* Improved form layouts for mobile */
+  .mobile-form {
+    @apply space-y-4;
+  }
+
+  .mobile-form .form-row {
+    @apply grid grid-cols-1 sm:grid-cols-2 gap-4;
+  }
+
+  /* Better card layouts for mobile */
+  .mobile-card-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4;
+  }
+
+  /* Mobile-friendly sidebar overlay */
+  .mobile-overlay {
+    @apply fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden;
+  }
   
   .nav-item {
     @apply transition-all duration-200 ease-in-out;

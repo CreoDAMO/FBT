@@ -158,14 +158,14 @@ export default function SmartContracts() {
 
           {/* Deploy Button */}
           {selectedContractType && (
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
               <div className="flex items-center space-x-4">
                 <span className="text-sm text-gray-600">Estimated Gas:</span>
                 <span className="font-medium">0.0045 ETH</span>
               </div>
               <Button 
                 onClick={handleDeploy}
-                className="fastbite-gradient text-white hover:shadow-lg transition-all"
+                className="fastbite-gradient text-white hover:shadow-lg transition-all touch-target w-full sm:w-auto"
               >
                 Deploy Contract
               </Button>
@@ -181,7 +181,7 @@ export default function SmartContracts() {
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="mobile-table w-full text-sm">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium text-gray-600">Contract</th>
@@ -194,29 +194,29 @@ export default function SmartContracts() {
               <tbody className="divide-y divide-gray-200">
                 {mockContracts.map((contract) => (
                   <tr key={contract.id}>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3" data-label="Contract">
                       <div>
                         <p className="font-medium text-gray-900">{contract.name}</p>
                         <p className="text-xs text-gray-500">{contract.contractAddress}</p>
                       </div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3" data-label="Type">
                       <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs">
                         {contract.contractType}
                       </span>
                     </td>
-                    <td className="px-4 py-3">{contract.network}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3" data-label="Network">{contract.network}</td>
+                    <td className="px-4 py-3" data-label="Status">
                       <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
                         {contract.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3" data-label="Actions">
                       <div className="flex space-x-2">
-                        <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
+                        <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 touch-target">
                           <ExternalLink size={14} />
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-700">
+                        <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-700 touch-target">
                           <Settings size={14} />
                         </Button>
                       </div>

@@ -93,9 +93,9 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="section-content p-6">
+    <div className="section-content p-4 md:p-6">
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="mobile-card-grid gap-4 md:gap-6 mb-6 md:mb-8">
         {kpiCards.map((card, index) => {
           const Icon = card.icon;
           return (
@@ -118,7 +118,7 @@ export default function Dashboard() {
       </div>
 
       {/* Charts and Real-time Data */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
         {/* Order Volume Chart */}
         <Card>
           <CardHeader>

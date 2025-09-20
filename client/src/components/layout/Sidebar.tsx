@@ -66,9 +66,18 @@ const navigationSections = [
 
 export default function Sidebar({ isOpen, currentSection, onSectionChange }: SidebarProps) {
   return (
-    <div className={`bg-white shadow-lg transition-all duration-300 ease-in-out ${
-      isOpen ? 'w-64' : 'w-0'
-    } min-h-screen overflow-hidden`}>
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div 
+          className="mobile-overlay"
+          onClick={() => onSectionChange(currentSection)}
+        />
+      )}
+      
+      <div className={`bg-white shadow-lg transition-all duration-300 ease-in-out ${
+        isOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full md:w-0 md:translate-x-0'
+      } min-h-screen overflow-hidden fixed md:relative z-50 md:z-auto`}>
       {/* Logo Header */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center space-x-3">
@@ -100,7 +109,7 @@ export default function Sidebar({ isOpen, currentSection, onSectionChange }: Sid
                   onClick={() => onSectionChange(item.id)}
                 >
                   <button
-                    className={`nav-item flex items-center w-full p-3 text-left rounded-lg hover:bg-gray-100 transition-colors ${
+                    className={`nav-item flex items-center w-full p-3 text-left rounded-lg hover:bg-gray-100 transition-colors touch-target ${
                       isActive ? 'active bg-fastbite-blue-50 text-fastbite-blue-700' : 'text-gray-700'
                     }`}
                   >
@@ -126,6 +135,7 @@ export default function Sidebar({ isOpen, currentSection, onSectionChange }: Sid
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
