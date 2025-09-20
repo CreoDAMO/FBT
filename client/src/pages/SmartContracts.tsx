@@ -5,7 +5,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { File, Coins, Vote, Handshake, ExternalLink, Settings } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  File,
+  Coins,
+  Vote,
+  Handshake,
+  Shield,
+  CheckCircle,
+  Clock,
+  AlertTriangle,
+  Zap,
+  Lock,
+  Settings
+} from 'lucide-react';
+import { OPENZEPPELIN_TEMPLATES, getTemplateByCategory } from '@/lib/openzeppelin-templates';
 
 interface SmartContract {
   id: number;
@@ -59,11 +73,121 @@ export default function SmartContracts() {
       icon: Handshake,
       color: "text-green-600",
     },
+    {
+      id: "custom",
+      name: "OpenZeppelin Templates",
+      description: "Leverage advanced OpenZeppelin contracts",
+      icon: Zap,
+      color: "text-yellow-600",
+    },
   ];
 
   const handleDeploy = () => {
     console.log("Deploying contract with config:", contractConfig);
     // In a real implementation, this would interact with Web3 to deploy the contract
+  };
+
+  const renderContractForm = () => {
+    if (!selectedContractType) return null;
+
+    const template = getTemplateByCategory(selectedContractType);
+
+    if (selectedContractType === "custom") {
+      return (
+        <Card className="mb-6 bg-gray-50">
+          <CardHeader>
+            <CardTitle className="text-lg">Select OpenZeppelin Template</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="erc20" className="w-full">
+              <TabsList>
+                {OPENZEPPELIN_TEMPLATES.map((t) => (
+                  <TabsTrigger key={t.category} value={t.category}>
+                    {t.name}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              {OPENZEPPELIN_TEMPLATES.map((t) => (
+                <TabsContent key={t.category} value={t.category} className="mt-4">
+                  <p className="text-sm text-gray-600 mb-4">{t.description}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {t.fields.map((field) => (
+                      <div key={field.name}>
+                        <Label htmlFor={field.name}>{field.label}</Label>
+                        <Input
+                          id={field.name}
+                          placeholder={field.placeholder}
+                          value={contractConfig[field.name as keyof typeof contractConfig] || ""}
+                          onChange={(e) => setContractConfig({...contractConfig, [field.name]: e.target.value})}
+                          type={field.type || "text"}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+              ))}
+            </Tabs>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    // Render form for default contract types
+    return (
+      <Card className="mb-6 bg-gray-50">
+        <CardHeader>
+          <CardTitle className="text-lg">Contract Configuration</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="contract-name">Contract Name</Label>
+              <Input
+                id="contract-name"
+                placeholder="PizzaPalaceToken"
+                value={contractConfig.name}
+                onChange={(e) => setContractConfig({...contractConfig, name: e.target.value})}
+              />
+            </div>
+            <div>
+              <Label htmlFor="symbol">Symbol</Label>
+              <Input
+                id="symbol"
+                placeholder="PPT"
+                value={contractConfig.symbol}
+                onChange={(e) => setContractConfig({...contractConfig, symbol: e.target.value})}
+              />
+            </div>
+            <div>
+              <Label htmlFor="network">Network</Label>
+              <Select value={contractConfig.network} onValueChange={(value) => setContractConfig({...contractConfig, network: value})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select network" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="base-mainnet">Base Mainnet</SelectItem>
+                  <SelectItem value="base-sepolia">Base Sepolia (Testnet)</SelectItem>
+                  <SelectItem value="ethereum">Ethereum Mainnet</SelectItem>
+                  <SelectItem value="polygon">Polygon</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {(selectedContractType === "token") && (
+              <div>
+                <Label htmlFor="total-supply">Total Supply</Label>
+                <Input
+                  id="total-supply"
+                  type="number"
+                  placeholder="1000000"
+                  value={contractConfig.totalSupply}
+                  onChange={(e) => setContractConfig({...contractConfig, totalSupply: e.target.value})}
+                />
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
   };
 
   return (
@@ -78,7 +202,7 @@ export default function SmartContracts() {
         </CardHeader>
         <CardContent>
           <p className="text-gray-600 mb-6">Deploy and manage branded smart contracts for white-label instances</p>
-          
+
           {/* Contract Type Selection */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             {contractTypes.map((type) => {
@@ -102,59 +226,7 @@ export default function SmartContracts() {
           </div>
 
           {/* Deployment Configuration */}
-          {selectedContractType && (
-            <Card className="mb-6 bg-gray-50">
-              <CardHeader>
-                <CardTitle className="text-lg">Contract Configuration</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="contract-name">Contract Name</Label>
-                    <Input
-                      id="contract-name"
-                      placeholder="PizzaPalaceToken"
-                      value={contractConfig.name}
-                      onChange={(e) => setContractConfig({...contractConfig, name: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="symbol">Symbol</Label>
-                    <Input
-                      id="symbol"
-                      placeholder="PPT"
-                      value={contractConfig.symbol}
-                      onChange={(e) => setContractConfig({...contractConfig, symbol: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="network">Network</Label>
-                    <Select value={contractConfig.network} onValueChange={(value) => setContractConfig({...contractConfig, network: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select network" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="base-mainnet">Base Mainnet</SelectItem>
-                        <SelectItem value="base-sepolia">Base Sepolia (Testnet)</SelectItem>
-                        <SelectItem value="ethereum">Ethereum Mainnet</SelectItem>
-                        <SelectItem value="polygon">Polygon</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="total-supply">Total Supply</Label>
-                    <Input
-                      id="total-supply"
-                      type="number"
-                      placeholder="1000000"
-                      value={contractConfig.totalSupply}
-                      onChange={(e) => setContractConfig({...contractConfig, totalSupply: e.target.value})}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          {renderContractForm()}
 
           {/* Deploy Button */}
           {selectedContractType && (
@@ -163,7 +235,7 @@ export default function SmartContracts() {
                 <span className="text-sm text-gray-600">Estimated Gas:</span>
                 <span className="font-medium">0.0045 ETH</span>
               </div>
-              <Button 
+              <Button
                 onClick={handleDeploy}
                 className="fastbite-gradient text-white hover:shadow-lg transition-all touch-target w-full sm:w-auto"
               >
