@@ -20,6 +20,7 @@ export default defineConfig({
   define: {
     global: 'globalThis',
     'process.env': process.env,
+    'Buffer': 'Buffer',
   },
   resolve: {
     alias: {
@@ -34,12 +35,17 @@ export default defineConfig({
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
     rollupOptions: {
-      external: ['buffer'],
+      external: [],
     },
   },
   optimizeDeps: {
     exclude: ['@replit/vite-plugin-cartographer'],
     include: ['buffer'],
+    esbuildOptions: {
+      define: {
+        global: 'globalThis',
+      },
+    },
   },
   server: {
     host: "0.0.0.0",
@@ -47,7 +53,7 @@ export default defineConfig({
     hmr: {
       port: 5173,
       host: "0.0.0.0",
-      clientPort: process.env.REPL_ID ? undefined : 5173,
+      clientPort: process.env.REPL_ID ? 443 : 5173,
     },
     fs: {
       strict: true,

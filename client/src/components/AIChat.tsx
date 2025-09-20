@@ -20,6 +20,8 @@ import {
   Volume2
 } from 'lucide-react';
 
+// Removed buffer import - using built-in TextEncoder/TextDecoder instead
+
 interface Message {
   id: string;
   role: 'user' | 'assistant';

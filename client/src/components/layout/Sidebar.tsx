@@ -13,7 +13,7 @@ import {
   Coins,
   Settings,
   Shield,
-  FileContract,
+  FileText,
   Menu,
   X,
   ChevronRight,
@@ -91,7 +91,7 @@ const navigationItems: NavigationItem[] = [
   {
     label: "Smart Contracts",
     path: "/contracts",
-    icon: FileContract,
+    icon: FileText,
     description: "Blockchain contract management"
   },
   {
