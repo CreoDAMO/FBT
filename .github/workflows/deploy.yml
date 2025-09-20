@@ -1,4 +1,6 @@
 name: Deploy to GitHub Pages and Vercel
+permissions:
+  contents: write
 
 on:
   push:
