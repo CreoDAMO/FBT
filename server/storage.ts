@@ -482,7 +482,7 @@ export class DatabaseStorage implements IStorage {
 
   async getMetricsByType(metricType: string, startDate?: Date, endDate?: Date): Promise<Metric[]> {
     let query = db.select().from(metrics).where(eq(metrics.metricType, metricType));
-    
+
     if (startDate && endDate) {
       query = query.where(and(
         eq(metrics.metricType, metricType),
@@ -490,7 +490,7 @@ export class DatabaseStorage implements IStorage {
         lte(metrics.date, endDate)
       ));
     }
-    
+
     return await query.orderBy(desc(metrics.date));
   }
 
@@ -502,13 +502,13 @@ export class DatabaseStorage implements IStorage {
   }> {
     // Get total orders count
     const [orderCount] = await db.select({ count: count() }).from(orders);
-    
+
     // Get active drivers count
     const [driverCount] = await db.select({ count: count() }).from(drivers).where(eq(drivers.isOnline, true));
-    
+
     // Get total revenue (sum of all completed orders)
     const [revenueResult] = await db.select({ total: sum(orders.totalAmount) }).from(orders).where(eq(orders.status, "delivered"));
-    
+
     // Get FBT staked amount (sum of all staked balances)
     const fbtToken = await this.getTokenBySymbol("FBT");
     let fbtStaked = "0";
@@ -600,7 +600,7 @@ export class DatabaseStorage implements IStorage {
     return agent || undefined;
   }
 
-  async getAllAiAgents(): Promise<AiAgent[]> {
+  async getAllAiAgents(): Promise<AiAgent[] > {
     return await db.select().from(aiAgents).orderBy(desc(aiAgents.createdAt));
   }
 

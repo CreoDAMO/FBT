@@ -180,85 +180,97 @@ export function setupAuth(app: Express) {
 
   // Google Strategy
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-    passport.use(
-      new GoogleStrategy(
-        {
-          clientID: process.env.GOOGLE_CLIENT_ID,
-          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-          callbackURL: "/api/auth/google/callback",
-        },
-        async (accessToken, refreshToken, profile, done) => {
-          try {
-            let user = await storage.getUserByEmail(profile.emails?.[0]?.value || '');
+    try {
+      passport.use(
+        new GoogleStrategy(
+          {
+            clientID: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            callbackURL: "/api/auth/google/callback",
+          },
+          async (accessToken, refreshToken, profile, done) => {
+            try {
+              let user = await storage.getUserByEmail(profile.emails?.[0]?.value || '');
 
-            if (!user) {
-              // Create new user
-              const userData = {
-                username: profile.emails?.[0]?.value || profile.id,
-                email: profile.emails?.[0]?.value || '',
-                password: await hashPassword(crypto.randomBytes(32).toString('hex')), // Random password
-                firstName: profile.name?.givenName || '',
-                lastName: profile.name?.familyName || '',
-                role: 'customer',
-                authProvider: 'google' as const,
-              };
+              if (!user) {
+                // Create new user
+                const userData = {
+                  username: profile.emails?.[0]?.value || profile.id,
+                  email: profile.emails?.[0]?.value || '',
+                  password: await hashPassword(crypto.randomBytes(32).toString('hex')), // Random password
+                  firstName: profile.name?.givenName || '',
+                  lastName: profile.name?.familyName || '',
+                  role: 'customer',
+                  authProvider: 'google' as const,
+                };
 
-              user = await storage.createUser(userData);
-            } else if (!user.authProvider || user.authProvider === 'email') {
-              // Link existing email account with Google
-              await storage.updateUser(user.id, { authProvider: 'google' });
-              user = await storage.getUser(user.id);
+                user = await storage.createUser(userData);
+              } else if (!user.authProvider || user.authProvider === 'email') {
+                // Link existing email account with Google
+                await storage.updateUser(user.id, { authProvider: 'google' });
+                user = await storage.getUser(user.id);
+              }
+
+              return done(null, user);
+            } catch (error) {
+              return done(error);
             }
-
-            return done(null, user);
-          } catch (error) {
-            return done(error);
           }
-        }
-      )
-    );
+        )
+      );
+    } catch (error) {
+      console.warn('Failed to initialize Google OAuth strategy:', error);
+    }
+  } else {
+    console.log('Google OAuth not configured - missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET');
   }
 
   // Facebook Strategy
   if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
-    passport.use(
-      new FacebookStrategy(
-        {
-          clientID: process.env.FACEBOOK_APP_ID,
-          clientSecret: process.env.FACEBOOK_APP_SECRET,
-          callbackURL: "/api/auth/facebook/callback",
-          profileFields: ['id', 'emails', 'name'],
-        },
-        async (accessToken, refreshToken, profile, done) => {
-          try {
-            let user = await storage.getUserByEmail(profile.emails?.[0]?.value || '');
+    try {
+      passport.use(
+        new FacebookStrategy(
+          {
+            clientID: process.env.FACEBOOK_APP_ID,
+            clientSecret: process.env.FACEBOOK_APP_SECRET,
+            callbackURL: "/api/auth/facebook/callback",
+            profileFields: ['id', 'emails', 'name'],
+          },
+          async (accessToken, refreshToken, profile, done) => {
+            try {
+              let user = await storage.getUserByEmail(profile.emails?.[0]?.value || '');
 
-            if (!user) {
-              // Create new user
-              const userData = {
-                username: profile.emails?.[0]?.value || profile.id,
-                email: profile.emails?.[0]?.value || '',
-                password: await hashPassword(crypto.randomBytes(32).toString('hex')), // Random password
-                firstName: profile.name?.givenName || '',
-                lastName: profile.name?.familyName || '',
-                role: 'customer',
-                authProvider: 'facebook' as const,
-              };
+              if (!user) {
+                // Create new user
+                const userData = {
+                  username: profile.emails?.[0]?.value || profile.id,
+                  email: profile.emails?.[0]?.value || '',
+                  password: await hashPassword(crypto.randomBytes(32).toString('hex')), // Random password
+                  firstName: profile.name?.givenName || '',
+                  lastName: profile.name?.familyName || '',
+                  role: 'customer',
+                  authProvider: 'facebook' as const,
+                };
 
-              user = await storage.createUser(userData);
-            } else if (!user.authProvider || user.authProvider === 'email') {
-              // Link existing email account with Facebook
-              await storage.updateUser(user.id, { authProvider: 'facebook' });
-              user = await storage.getUser(user.id);
+                user = await storage.createUser(userData);
+              } else if (!user.authProvider || user.authProvider === 'email') {
+                // Link existing email account with Facebook
+                await storage.updateUser(user.id, { authProvider: 'facebook' });
+                user = await storage.getUser(user.id);
+              }
+
+              return done(null, user);
+            } catch (error) {
+              return done(error);
             }
-
-            return done(null, user);
-          } catch (error) {
-            return done(error);
           }
-        }
-      )
-    );
+        )
+      );
+    } catch (error) {
+      console.warn('Failed to initialize Facebook OAuth strategy:', error);
+    }
+  } else {
+    console.log('Facebook OAuth not configured - missing FACEBOOK_APP_ID or FACEBOOK_APP_SECRET');
   }
 
   passport.serializeUser((user, done) => done(null, user.id));

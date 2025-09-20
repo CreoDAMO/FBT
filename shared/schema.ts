@@ -1,6 +1,7 @@
 import { pgTable, text, serial, integer, boolean, timestamp, decimal, jsonb, varchar, uuid } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { createInsertSchema } from "drizzle-zod";
+import { createInsertSchema } from "drizzle-orm";
+import { createSelectSchema } from "drizzle-orm";
 import { z } from "zod";
 
 // Users table with role-based access
@@ -508,3 +509,6 @@ export type OmniverseSession = typeof omniverseSessions.$inferSelect;
 export type InsertOmniverseSession = z.infer<typeof insertOmniverseSessionSchema>;
 export type OmniverseInteraction = typeof omniverseInteractions.$inferSelect;
 export type InsertOmniverseInteraction = z.infer<typeof insertOmniverseInteractionSchema>;
+
+// Export the users table for use in storage
+export { users };
