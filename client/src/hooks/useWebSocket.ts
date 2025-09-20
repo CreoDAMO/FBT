@@ -13,7 +13,10 @@ export function useWebSocket(url?: string) {
 
   const wsUrl = url || (() => {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    return `${protocol}//${window.location.host}/ws`;
+    const host = window.location.host.includes('replit.dev') 
+      ? window.location.host.replace(':5173', ':5000')
+      : window.location.host.replace(':5173', ':5000');
+    return `${protocol}//${host}/ws`;
   })();
 
   const connect = () => {

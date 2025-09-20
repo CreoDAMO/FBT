@@ -1,3 +1,4 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
@@ -18,21 +19,27 @@ export default defineConfig({
   ],
   define: {
     global: 'globalThis',
+    'process.env': process.env,
   },
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
+      buffer: 'buffer',
     },
   },
   root: path.resolve(import.meta.dirname, "client"),
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      external: ['buffer'],
+    },
   },
   optimizeDeps: {
-    exclude: ['@replit/vite-plugin-cartographer']
+    exclude: ['@replit/vite-plugin-cartographer'],
+    include: ['buffer'],
   },
   server: {
     host: "0.0.0.0",
@@ -40,7 +47,7 @@ export default defineConfig({
     hmr: {
       port: 5173,
       host: "0.0.0.0",
-      clientPort: process.env.REPL_ID ? 443 : 5173,
+      clientPort: process.env.REPL_ID ? undefined : 5173,
     },
     fs: {
       strict: true,
