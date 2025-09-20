@@ -16,6 +16,9 @@ export default defineConfig({
         ]
       : []),
   ],
+  define: {
+    global: 'globalThis',
+  },
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
@@ -28,12 +31,16 @@ export default defineConfig({
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
   },
+  optimizeDeps: {
+    exclude: ['@replit/vite-plugin-cartographer']
+  },
   server: {
     host: "0.0.0.0",
     port: 5173,
     hmr: {
       port: 5173,
       host: "0.0.0.0",
+      clientPort: process.env.REPL_ID ? 443 : 5173,
     },
     fs: {
       strict: true,
