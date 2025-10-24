@@ -3,6 +3,7 @@ import { Strategy as LocalStrategy } from "passport-local";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Strategy as FacebookStrategy } from "passport-facebook";
 import { Express } from "express";
+import rateLimit from "express-rate-limit";
 import session from "express-session";
 import MemoryStore from "memorystore";
 import bcrypt from "bcryptjs";
@@ -537,7 +538,7 @@ export function setupAuth(app: Express) {
   });
 
   // Get current user
-  app.get("/api/auth/user", (req, res) => {
+  app.get("/api/auth/user", userRouteLimiter, (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "Not authenticated" });
     }
