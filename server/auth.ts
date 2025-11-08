@@ -291,7 +291,7 @@ export function setupAuth(app: Express) {
   // Routes
 
   // Traditional login
-  app.post("/api/auth/login", async (req, res, next) => {
+  app.post("/api/auth/login", loginLimiter, async (req, res, next) => {
     passport.authenticate("local", (err: any, user: any, info: any) => {
       if (err) {
         console.error("Login error:", err);
@@ -383,6 +383,15 @@ export function setupAuth(app: Express) {
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 10, // max 10 registration attempts per window per IP
     message: "Too many registration attempts from this IP, please try again later",
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  // Login rate limiter
+  const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // max 10 login attempts per window per IP
+    message: "Too many login attempts from this IP, please try again later",
     standardHeaders: true,
     legacyHeaders: false,
   });
