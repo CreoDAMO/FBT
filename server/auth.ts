@@ -327,7 +327,7 @@ export function setupAuth(app: Express) {
   });
 
   // Registration
-  app.post("/api/auth/register", async (req, res) => {
+  app.post("/api/auth/register", registerLimiter, async (req, res) => {
     try {
       const userData = insertUserSchema.parse(req.body);
 
@@ -376,6 +376,15 @@ export function setupAuth(app: Express) {
       console.error("Registration error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
+  });
+
+  // Registration rate limiter
+  const registerLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // max 10 registration attempts per window per IP
+    message: "Too many registration attempts from this IP, please try again later",
+    standardHeaders: true,
+    legacyHeaders: false,
   });
 
   // Web3 wallet login
