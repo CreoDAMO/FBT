@@ -379,7 +379,16 @@ export function setupAuth(app: Express) {
   });
 
   // Web3 wallet login
-  app.post("/api/auth/wallet-login", async (req, res) => {
+  // Rate limiter for wallet login endpoint
+  const walletLoginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // max 10 attempts per window per IP
+    message: "Too many login attempts from this IP, please try again later",
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  app.post("/api/auth/wallet-login", walletLoginLimiter, async (req, res) => {
     try {
       const { walletAddress, provider } = req.body;
 
